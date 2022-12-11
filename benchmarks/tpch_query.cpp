@@ -31,8 +31,8 @@ void tpch_query::gen_Q6(uint64_t thd_id) {
 
 	//Q6 related vars
 	uint64_t year = URand(93, 97, 0);
-	uint64_t day = URand(1, 365, 0);
-	date = (uint64_t)(year * 1000 + day);
+	// uint64_t day = URand(1, 365, 0);
+	date = (uint64_t)(year * 1000 + 1);
 	discount = ((double)URand(2, 9, 0)) / 100;
 	quantity = (double)URand(24, 25, 0);
 
@@ -55,8 +55,8 @@ void tpch_query::gen_Q6_index(uint64_t thd_id) {
 
 	//Q6 related vars
 	uint64_t year = URand(93, 97, 0);
-	uint64_t day = URand(1, 365, 0);
-	date = (uint64_t)(year * 1000 + day);
+	// uint64_t day = URand(1, 365, 0);
+	date = (uint64_t)(year * 1000 + 1);
 	discount = ((double)URand(2, 9, 0)) / 100;
 	quantity = (double)URand(24, 25, 0);
 }

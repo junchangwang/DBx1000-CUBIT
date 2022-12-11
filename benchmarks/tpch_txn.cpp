@@ -98,11 +98,8 @@ RC tpch_txn_man::run_Q6_index(tpch_query * query) {
 	uint64_t date = query->date;	// + 1 year
 	uint64_t discount = (uint64_t)(query->discount * 100); // +1 -1
 	double quantity = query->quantity;
-	uint64_t year = date / 1000;
-	uint64_t day = date % 1000;
-	uint64_t diff = 365 - day;
-	uint64_t year1 = date;
-	for (uint64_t i = year1; i <= year1 + diff; i++) {
+
+	for (uint64_t i = date; i <= (uint64_t)(date + 364); i++) {
 		for (uint64_t j = (uint64_t)(discount - 1); j <= (uint64_t)(discount + 1); j++) {
 			for (uint64_t k = (uint64_t)((uint64_t)quantity - 1); k > (uint64_t)0; k--){
 	
@@ -141,55 +138,6 @@ RC tpch_txn_man::run_Q6_index(tpch_query * query) {
 		}
 	}
 
-	// year2
-	uint64_t year2 = (uint64_t)((year + 1)*1000 + 1);
-	for (uint64_t i = year2; i < (uint64_t)(year2 + day - 1); i++) {
-		for (uint64_t j = (uint64_t)(discount - 1); j <= (uint64_t)(discount + 1); j++) {
-			for (uint64_t k = (uint64_t)quantity - 1; k > (uint64_t)0; k--){
-				// key = (uint64_t)((i * 12 + j) * 26 + k);
-				key = tpch_lineitemKey_index(i, j, k);
-				// cout << "Q6_txn_key = " << key << endl; 
-				if ( !index->index_exist(key, 0) ){
-					// cout << i << " NOT EXIST!" << endl;
-					continue;
-				}	
-				// debug
-				// cout << "Q6_txn_key = " << key << endl;
-				// cout << "index query_date " << query->date << " " << i << endl;
-				// cout << "index query_discount " << query->discount << " " << j << endl;
-				// cout << "index query_quantity " << query->quantity << " " << k << endl << endl;	
-
-				item = index_read(index, key, 0);
-				itemid_t * local_item = item;
-				assert(item != NULL);
-				while (local_item != NULL) {
-					row_t * r_lt = ((row_t *)local_item->location);
-					row_t * r_lt_local = get_row(r_lt, RD);
-					if (r_lt_local == NULL) {
-						return finish(Abort);
-					}
-					// cout << "address = " << &r_lt_local->data << endl;
-					double l_extendedprice;
-					r_lt_local->get_value(L_EXTENDEDPRICE, l_extendedprice);
-					revenue += l_extendedprice * ((double)j / 100);
-
-					local_item = local_item->next;
-				}
-				
-				// // debug
-				// uint64_t l_shipdate;
-				// r_lt_local->get_value(L_SHIPDATE, l_shipdate);
-				// double l_discount;
-				// r_lt_local->get_value(L_DISCOUNT, l_discount);
-				// double l_quantity;
-				// r_lt_local->get_value(L_QUANTITY, l_quantity);
-				// cout << "real row query_date " << query->date << " " << l_shipdate << endl;
-				// cout << "real row query_discount " << query->discount << " " << l_discount << endl;
-				// cout << "real row query_quantity " << query->quantity << " " << l_quantity << endl << endl;	
-				// cout << "real key" << tpch_lineitemKey_index(l_shipdate, (uint64_t)(l_discount*100), (uint64_t) quantity); 
-			}
-		}
-	}
 	cout << "********Q6 with index revenue is *********" << revenue << endl << endl;
 	assert( rc == RCOK );
 	return finish(rc);
