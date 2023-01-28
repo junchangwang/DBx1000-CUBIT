@@ -90,9 +90,7 @@ RC tpch_txn_man::run_Q6_scan(int tid, tpch_query * query) {
 	int cnt = 0;
 
 #ifdef ENABLE_PERF
-	int perf_pid;
 	if (tid == 0) {
-		perf_pid = gen_perf_process((char *)"SCAN");
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -139,7 +137,6 @@ RC tpch_txn_man::run_Q6_scan(int tid, tpch_query * query) {
 
 #ifdef ENABLE_PERF
 	if (tid == 0) {
-		kill(perf_pid, SIGINT);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -162,6 +159,14 @@ RC tpch_txn_man::run_Q6_hash(int tid, tpch_query * query, IndexHash *index)
 	double quantity = query->quantity;
 	long  long index_us = (long  long)0;
 	vector<itemid_t *> item_list{};
+
+#ifdef ENABLE_PERF
+	int perf_pid;
+	if (tid == 0) {
+		perf_pid = gen_perf_process((char *)"HASH");
+		usleep(WAIT_FOR_PERF_U);
+	}
+#endif
 
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -190,9 +195,8 @@ RC tpch_txn_man::run_Q6_hash(int tid, tpch_query * query, IndexHash *index)
 	index_us = std::chrono::duration_cast<std::chrono::microseconds>(end_f-start).count();
 
 #ifdef ENABLE_PERF
-	int perf_pid;
 	if (tid == 0) {
-		perf_pid = gen_perf_process((char *)"HASH");
+		kill(perf_pid, SIGINT);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -217,13 +221,6 @@ RC tpch_txn_man::run_Q6_hash(int tid, tpch_query * query, IndexHash *index)
 	auto end = std::chrono::high_resolution_clock::now();
 	long  long tuple_us = std::chrono::duration_cast<std::chrono::microseconds>(end-tmp_5).count();
 
-#ifdef ENABLE_PERF
-	if (tid == 0) {
-		kill(perf_pid, SIGINT);
-		usleep(WAIT_FOR_PERF_U);
-	}
-#endif
-
 	// cout << "********Q6 with Hash  revenue is : " << revenue << "  . Number of items: " << cnt << ". Microseconds: " << time_elapsed_us << endl;
 	string tmp = "Hash " + to_string(item_list.size()) + ":" + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
 	output_info[tid].push_back(tmp);
@@ -242,6 +239,14 @@ RC tpch_txn_man::run_Q6_btree(int tid, tpch_query * query, index_btree *index)
 	double quantity = query->quantity;
 	long  long index_us = (long  long)0;
 	vector<itemid_t *> item_list{};
+
+#ifdef ENABLE_PERF
+	int perf_pid;
+	if (tid == 0) {
+		perf_pid = gen_perf_process((char *)"BTREE");
+		usleep(WAIT_FOR_PERF_U);
+	}
+#endif
 
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -270,9 +275,8 @@ RC tpch_txn_man::run_Q6_btree(int tid, tpch_query * query, index_btree *index)
 	index_us = std::chrono::duration_cast<std::chrono::microseconds>(end_f-start).count();
 
 #ifdef ENABLE_PERF
-	int perf_pid;
 	if (tid == 0) {
-		perf_pid = gen_perf_process((char *)"BTREE");
+		kill(perf_pid, SIGINT);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -297,13 +301,6 @@ RC tpch_txn_man::run_Q6_btree(int tid, tpch_query * query, index_btree *index)
 	auto end = std::chrono::high_resolution_clock::now();
 	long long tuple_us = std::chrono::duration_cast<std::chrono::microseconds>(end-tmp_5).count();
 
-#ifdef ENABLE_PERF
-	if (tid == 0) {
-		kill(perf_pid, SIGINT);
-		usleep(WAIT_FOR_PERF_U);
-	}
-#endif
-
 	// cout << "********Q6 with BTree revenue is : " << revenue << "  . Number of items: " << cnt << ". Microseconds: " << time_elapsed_us << endl;
 	string tmp = "BTree " + to_string(item_list.size()) + ":" + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
 	output_info[tid].push_back(tmp);
@@ -326,6 +323,13 @@ RC tpch_txn_man::run_Q6_bitmap(int tid, tpch_query *query)
 	assert(quantity_val == 24 || quantity_val == 25);
 	long  long index_us = (long  long)0;
 
+#ifdef ENABLE_PERF
+	int perf_pid;
+	if (tid == 0) {
+		perf_pid = gen_perf_process((char *)"CUBIT");
+		usleep(WAIT_FOR_PERF_U);
+	}
+#endif
 	auto start = std::chrono::high_resolution_clock::now();
 	
 	// TODO: 
@@ -396,9 +400,8 @@ RC tpch_txn_man::run_Q6_bitmap(int tid, tpch_query *query)
 	index_us = std::chrono::duration_cast<std::chrono::microseconds>(tmp_4-start).count();
 
 #ifdef ENABLE_PERF
-	int perf_pid;
 	if (tid == 0) {
-		perf_pid = gen_perf_process((char *)"CUBIT");
+		kill(perf_pid, SIGINT);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -423,13 +426,6 @@ RC tpch_txn_man::run_Q6_bitmap(int tid, tpch_query *query)
 
 	auto end = std::chrono::high_resolution_clock::now();
 	long long tuple_us = std::chrono::duration_cast<std::chrono::microseconds>(end-tmp_5).count();
-
-#ifdef ENABLE_PERF
-	if (tid == 0) {
-		kill(perf_pid, SIGINT);
-		usleep(WAIT_FOR_PERF_U);
-	}
-#endif
 
 	// cout << "********Q6 with CUBIT revenue is : " << revenue << "  . Number of items: " << cnt << ". Microseconds: " << time_elapsed_us << endl << endl;
 	string tmp = "CUBIT " + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
