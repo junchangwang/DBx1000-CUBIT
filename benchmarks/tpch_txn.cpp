@@ -15,7 +15,7 @@
 #include "perf.h"
 
 #define ENABLE_PERF 1
-#define WAIT_FOR_PERF_U (1000)
+#define WAIT_FOR_PERF_U (1000*100)
 
 void tpch_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
