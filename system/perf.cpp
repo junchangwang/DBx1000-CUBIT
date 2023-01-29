@@ -4,12 +4,16 @@
  **
  ** -------------------------------------------------------------------------*/
 
+#include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 #include <cstdio>
 #include <cassert>
 #include <cstring>
 #include <string>
+#include <iostream>
+
+using namespace std;
 
 int gen_perf_process(char *tag) {
     int perf_pid = fork();
@@ -40,3 +44,20 @@ int gen_perf_process(char *tag) {
     assert(0);
     return -1;
 }
+
+int kill_perf_process(int perf_pid) 
+{
+	int stat_val;
+	pid_t child_pid;
+
+	do {
+		cout << "Killing perf process: " << perf_pid << endl;
+		kill(perf_pid, SIGINT);
+		child_pid = wait(&stat_val);
+	} while (perf_pid != child_pid);
+
+	cout << "Perf process killed: " << child_pid << endl;
+
+	return 0;
+}
+

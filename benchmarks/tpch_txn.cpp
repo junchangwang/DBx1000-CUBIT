@@ -196,7 +196,7 @@ RC tpch_txn_man::run_Q6_hash(int tid, tpch_query * query, IndexHash *index)
 
 #ifdef ENABLE_PERF
 	if (tid == 0) {
-		kill(perf_pid, SIGINT);
+		kill_perf_process(perf_pid);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -276,7 +276,7 @@ RC tpch_txn_man::run_Q6_btree(int tid, tpch_query * query, index_btree *index)
 
 #ifdef ENABLE_PERF
 	if (tid == 0) {
-		kill(perf_pid, SIGINT);
+		kill_perf_process(perf_pid);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
@@ -401,7 +401,7 @@ RC tpch_txn_man::run_Q6_bitmap(int tid, tpch_query *query)
 
 #ifdef ENABLE_PERF
 	if (tid == 0) {
-		kill(perf_pid, SIGINT);
+		kill_perf_process(perf_pid);
 		usleep(WAIT_FOR_PERF_U);
 	}
 #endif
