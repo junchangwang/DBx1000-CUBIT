@@ -26,15 +26,13 @@ int gen_perf_process(char *tag) {
             char perf_pid_opt[24];
 	    memset(perf_pid_opt, 0, 24);
             snprintf(perf_pid_opt, 24, "%d", perf_pid);
-            char output_filename[36];
-	    memset(output_filename, 0, 36);
-            snprintf(output_filename, 36, "perf.output.%s.%d", tag, perf_pid);
 	    std::string events = "cache-references,cache-misses,cycles,instructions,branches,branch-misses,page-faults,cpu-migrations";
 	    events += ",L1-dcache-loads,L1-dcache-load-misses,L1-icache-load-misses";
 	    events += ",LLC-loads,LLC-load-misses";
 	    events += ",dTLB-loads,dTLB-load-misses";
+	    cerr << "=== " << tag << endl;
             char const *perfargs[12] = {"perf", "stat", "-e", events.c_str(), "-p",
-                    perf_pid_opt, "-o", output_filename, "--append", NULL};
+                    perf_pid_opt, "--log-fd", "2", NULL};
             execvp("perf", (char **)perfargs);
             assert(0 && "perf failed to start");
     } else {
@@ -51,12 +49,9 @@ int kill_perf_process(int perf_pid)
 	pid_t child_pid;
 
 	do {
-		cout << "Killing perf process: " << perf_pid << endl;
 		kill(perf_pid, SIGINT);
 		child_pid = wait(&stat_val);
 	} while (perf_pid != child_pid);
-
-	cout << "Perf process killed: " << child_pid << endl;
 
 	return 0;
 }
