@@ -14,6 +14,9 @@ ROOT_PATH = os.getcwd()
 
 ossystem = os.system
 
+# core_number = [1, 2, 4, 8, 16, 24, 32]
+core_number = [1, 2, 4]
+
 
 ###################################### cmd #########################################
 def build():      
@@ -21,8 +24,6 @@ def build():
 
 
 def gen_raw_data(): 
-    core_number = [1, 2, 4, 8, 16, 24, 32]
-    # core_number = [1, 2, 4]
     for num in core_number:
         cmd = './rundb -t{} -M cache > dat_tmp_DBx/core_{}.dat'.format(num, num)
         os.system(cmd)
@@ -157,7 +158,6 @@ def index_time_analysis(filename):
 
 def  run_indexAndTuples():
     f = open('dat_DBx/index_time.dat', 'w')
-    core_number = [1, 2, 4, 8, 16, 24, 32]
     ret = [[]]
     ret.clear()
     for num in core_number:
@@ -195,7 +195,6 @@ def  run_indexAndTuples():
 
 def  run_latency():
     f = open('dat_DBx/run_time.dat', 'w')
-    core_number = [1, 2, 4, 8, 16, 24, 32]
     ret = [[]]
     ret.clear()
     for num in core_number:
@@ -236,8 +235,6 @@ def run():
 
     print ('DBx1000 core')
     print ('-' * 10)
-    core_number = [1, 2, 4, 8, 16, 24, 32]
-    # core_number = [1, 2, 4]
     f = open('dat_DBx/core.dat','w')
     for num in core_number:
         res = throughput_analysis('dat_tmp_DBx/core_{}.dat'.format(num))
