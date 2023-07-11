@@ -20,9 +20,17 @@ public:
         return;
     }
 
-    RC init(uint64_t part_cnt);
+    RC init(uint64_t part_cnt) {
+        return RCOK;
+    }
 
-    RC init(uint64_t part_cnt, table_t * table);
+    RC init(uint64_t part_cnt, table_t * table) {
+        return RCOK;
+    }
+
+    RC init_with_loadkey(uint64_t part_cnt, ART_OLC::Tree::LoadKeyFunction load_key_func);
+
+    RC init_with_loadkey(uint64_t part_cnt, ART_OLC::Tree::LoadKeyFunction load_key_func, table_t * table);
 
     ART_OLC::Tree * find_root(uint64_t part_id);
 

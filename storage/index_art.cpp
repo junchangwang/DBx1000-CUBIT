@@ -7,35 +7,18 @@
 #include "tpch.h"
 #include "tpch_const.h"
 
-void loadKey(TID tid, Key &key) {
-    key.setKeyLen(sizeof(tid));
-    itemid_t * item = reinterpret_cast<itemid_t *>(tid);
-    row_t * row = (row_t *)item->location;
-
-    uint64_t shipdate;
-    row->get_value(L_SHIPDATE, shipdate);
-    double l_discount;
-    row->get_value(L_DISCOUNT, l_discount);
-    uint64_t discount = (uint64_t)(l_discount * 100);
-    double quantity;
-    row->get_value(L_QUANTITY, quantity);
-    uint64_t computed_key = tpch_lineitemKey_index(shipdate, discount, (uint64_t)quantity);
-
-    reinterpret_cast<uint64_t *>(&key[0])[0] = __builtin_bswap64(computed_key);
-}
-
-RC index_art::init(uint64_t part_cnt) {
+RC index_art::init_with_loadkey(uint64_t part_cnt, ART_OLC::Tree::LoadKeyFunction load_key_func) {
     this->part_cnt = part_cnt;
     roots = (ART_OLC::Tree **) malloc(part_cnt * sizeof(ART_OLC::Tree));
     for (uint32_t i = 0; i < part_cnt; i++) {
-        roots[i] = new ART_OLC::Tree{loadKey};
+        roots[i] = new ART_OLC::Tree{load_key_func};
     }
     return RCOK;
 }
 
-RC index_art::init(uint64_t part_cnt, table_t * table) {
+RC index_art::init_with_loadkey(uint64_t part_cnt, ART_OLC::Tree::LoadKeyFunction load_key_func, table_t * table) {
     this->table = table;
-    init(part_cnt);
+    init_with_loadkey(part_cnt, load_key_func);
     return RCOK;
 }
 

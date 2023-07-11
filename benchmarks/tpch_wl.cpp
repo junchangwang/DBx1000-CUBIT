@@ -15,6 +15,23 @@
 #include "mem_alloc.h"
 #include "tpch_const.h"
 
+void loadKeyForTPCHQ6(TID tid, Key &key) {
+    key.setKeyLen(sizeof(tid));
+    itemid_t * item = reinterpret_cast<itemid_t *>(tid);
+    row_t * row = (row_t *)item->location;
+
+    uint64_t shipdate;
+    row->get_value(L_SHIPDATE, shipdate);
+    double l_discount;
+    row->get_value(L_DISCOUNT, l_discount);
+    uint64_t discount = (uint64_t)(l_discount * 100);
+    double quantity;
+    row->get_value(L_QUANTITY, quantity);
+    uint64_t computed_key = tpch_lineitemKey_index(shipdate, discount, (uint64_t)quantity);
+
+    reinterpret_cast<uint64_t *>(&key[0])[0] = __builtin_bswap64(computed_key);
+}
+
 RC tpch_wl::init() 
 {
 #if TPCH_EVA_CUBIT
@@ -153,7 +170,7 @@ RC tpch_wl::init_schema(const char * schema_file) {
 
     i_Q6_art = (index_art *) _mm_malloc(sizeof(index_art), 64);
     new(i_Q6_art) index_art();
-    i_Q6_art->init(part_cnt, tables[tname]);
+    i_Q6_art->init_with_loadkey(part_cnt, loadKeyForTPCHQ6, tables[tname]);
 
 	return RCOK;
 }

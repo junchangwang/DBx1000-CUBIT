@@ -18,7 +18,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD 					TPCH
+#define WORKLOAD 					TPCC
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -137,7 +137,7 @@
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
 #define NUM_WH 						1
-#define TPCC_EVA_CUBIT				true
+#define TPCC_EVA_CUBIT				2
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 

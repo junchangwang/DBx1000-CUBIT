@@ -6,12 +6,29 @@
 #include "table.h"
 #include "index_hash.h"
 #include "index_btree.h"
+#include "index_bwtree.h"
+#include "index_art.h"
 #include "tpc_helper.h"
 #include "row.h"
 #include "query.h"
 #include "txn.h"
 #include "mem_alloc.h"
 #include "tpcc_const.h"
+
+void loadKeyForTPCC(TID tid, Key &key) {
+	key.setKeyLen(sizeof(tid));
+	itemid_t * item = reinterpret_cast<itemid_t *>(tid);
+	row_t * r_cust = (row_t *)item->location;
+	//row_t * r_cust_local = get_row(r_cust, RD);
+
+	uint64_t did;
+	uint64_t wid;
+	r_cust->get_value(C_D_ID, did);
+	r_cust->get_value(C_W_ID, wid);
+	uint64_t computed_key = distKey(did - 1, wid - 1);
+
+	reinterpret_cast<uint64_t *>(&key[0])[0] = __builtin_bswap64(computed_key);
+}
 
 RC tpcc_wl::init() 
 {
@@ -53,12 +70,20 @@ RC tpcc_wl::init_bitmap_c_w_id( )
 
 	// DBx1000 doesn't use the following parameters;
 	// they are used by nicolas.
-	config->n_rows = 0; 
+	config->n_rows = 0;  // TODO???
 	config->n_queries = 900;
 	config->n_udis = 100;
 	config->verbose = false;
 	config->time_out = 100;
-	
+	config->autoCommit = false;
+	config->n_merge_threshold = 16;
+	config->db_control = true;
+
+	config->segmented_btv = false;
+	config->encoded_word_len = 31;
+	config->rows_per_seg = 100000;
+	config->enable_parallel_cnt = false;
+
 	if (config->approach == "ub") {
         bitmap_c_w_id = new ub::Table(config);
     } else if (config->approach == "nbub-lk") {
@@ -101,6 +126,15 @@ RC tpcc_wl::init_schema(const char * schema_file) {
 	i_customer_id = indexes["CUSTOMER_ID_IDX"];
 	i_customers = indexes["CUSTOMERS_IDX"];
 	i_stock = indexes["STOCK_IDX"];
+
+    i_customers_bwtree = (index_bwtree *) _mm_malloc(sizeof(index_bwtree), 64);
+    new(i_customers_bwtree) index_bwtree();
+    i_customers_bwtree->init(1, t_customer);
+
+    i_customers_art = (index_art *) _mm_malloc(sizeof(index_art), 64);
+    new(i_customers_art) index_art();
+    i_customers_art->init_with_loadkey(1, loadKeyForTPCC, t_customer);
+
 	return RCOK;
 }
 
@@ -272,6 +306,8 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 
 void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 	assert(g_cust_per_dist >= 1000);
+	i_customers_bwtree->UpdateThreadLocal(g_thread_cnt);
+	i_customers_bwtree->AssignGCID(0);
 	for (UInt32 cid = 1; cid <= g_cust_per_dist; cid++) {
 		row_t * row;
 		uint64_t row_id;
@@ -336,6 +372,10 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 #if TPCC_EVA_CUBIT
 		key = distKey(did - 1, wid - 1);
 		index_insert(i_customers, key, row, wh_to_part(wid));
+
+		index_insert((INDEX *)i_customers_bwtree, key, row, 0);
+		index_insert_with_primary_key((INDEX *)i_customers_art, key, (uint64_t)cid, row, 0);
+
 		if (bitmap_c_w_id->config->approach == "naive" ) {
 			bitmap_c_w_id->append(0, key);
 		}
@@ -345,6 +385,7 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 		}
 #endif
 	}
+	i_customers_bwtree->UnregisterThread(0);
 }
 
 void tpcc_wl::init_tab_hist(uint64_t c_id, uint64_t d_id, uint64_t w_id) {

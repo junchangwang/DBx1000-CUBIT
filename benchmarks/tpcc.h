@@ -45,6 +45,9 @@ public:
 	INDEX * 	i_orderline; // key = (w_id, d_id, o_id)
 	INDEX * 	i_orderline_wd; // key = (w_id, d_id). 
 
+	index_bwtree * i_customers_bwtree;
+	index_art * i_customers_art;
+
 	BaseTable *bitmap_c_w_id;
 	
 	bool ** delivering;
@@ -84,7 +87,7 @@ private:
 	RC run_order_status(tpcc_query * query);
 	RC run_delivery(tpcc_query * query);
 	RC run_stock_level(tpcc_query * query);
-	RC evaluate_index(tpcc_query *query);
+	RC evaluate_index(int tid, tpcc_query *query);
 };
 
 #endif

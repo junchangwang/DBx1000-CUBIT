@@ -8,6 +8,8 @@
 #include "row.h"
 #include "index_hash.h"
 #include "index_btree.h"
+#include "index_bwtree.h"
+#include "index_art.h"
 #include "tpcc_const.h"
 
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
@@ -18,7 +20,7 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 	tpcc_query * m_query = (tpcc_query *) query;
 #if TPCC_EVA_CUBIT && (TPCC_EVA_CUBIT == TPCC)
-	return evaluate_index(m_query);
+	return evaluate_index(tid, m_query);
 #else
 	switch (m_query->type) {
 		case TPCC_PAYMENT :
@@ -37,7 +39,7 @@ RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 #endif
 }
 
-RC tpcc_txn_man::evaluate_index(tpcc_query * query) 
+RC tpcc_txn_man::evaluate_index(int tid, tpcc_query * query) 
 {
 	RC rc = RCOK;
 	itemid_t * item;
@@ -70,14 +72,14 @@ RC tpcc_txn_man::evaluate_index(tpcc_query * query)
 	int tmp = 0;
 	uint64_t key = distKey(c_d_id, c_w_id);
 	INDEX * index = _wl->i_customers;
+	auto start = std::chrono::high_resolution_clock::now();
 	item = index_read(index, key, wh_to_part(query->c_w_id));
 	assert(item != NULL);
 
-	auto start = std::chrono::high_resolution_clock::now();
 	for (tmp = 0; item; tmp++) {
 		row_t *r_cust = ((row_t *)item->location);
-		row_t *r_cust_local = get_row(r_cust, RD);
-		if (r_cust_local == NULL) {
+		//row_t *r_cust_local = get_row(r_cust, RD);
+		if (r_cust == NULL) {
 			return RCOK;
 		}
 
@@ -99,6 +101,37 @@ RC tpcc_txn_man::evaluate_index(tpcc_query * query)
 	long  long time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
 	cout << "HashTable: Loop times: " << tmp << ". Found string times: " << cnt << ". Microseconds: " << time_elapsed_ms << endl;
 	cout << "Memory concumption (Bytes): " << index->index_size() << endl;
+
+	start = std::chrono::high_resolution_clock::now();
+	_wl->i_customers_bwtree->AssignGCID(tid);
+	vector<itemid_t *> items = index_read(_wl->i_customers_bwtree, key, 0);
+	_wl->i_customers_bwtree->UnregisterThread(tid);
+	for (auto item : items) {
+		row_t *r_cust = ((row_t *)item->location);
+		//row_t *r_cust_local = get_row(r_cust, RD);
+		if (r_cust == NULL) {
+			return RCOK;
+		}
+	}
+	end = std::chrono::high_resolution_clock::now();
+	time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+	cout << "BwTree:  " << " Microseconds: " << time_elapsed_ms << endl;
+	cout << "Memory concumption (Bytes): " << _wl->i_customers_bwtree->index_size() << endl;
+
+	start = std::chrono::high_resolution_clock::now();
+	item = index_read((INDEX *)_wl->i_customers_art, key, 0);
+	for (int tmp = 0; item; tmp++) {
+		row_t *r_cust = ((row_t *)item->location);
+		//row_t *r_cust_local = get_row(r_cust, RD);
+		if (r_cust == NULL) {
+			return RCOK;
+		}
+		item = item->next;
+	}
+	end = std::chrono::high_resolution_clock::now();
+	time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+	cout << "ART: " << " Microseconds: " << time_elapsed_ms << endl;
+	cout << "Memory concumption (Bytes): " << _wl->i_customers_art->index_size() << endl;
 
 	start = std::chrono::high_resolution_clock::now();
 	nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub *>(_wl->bitmap_c_w_id);
