@@ -46,6 +46,10 @@ public:
 	uint64_t ol_delivery_d;
 	// for order-status
 
+	/**********************************************/	
+	// txn input for new-upsert-customer
+	/**********************************************/
+	uint64_t new_c_d_id;
 
 private:
 	// warehouse id to partition id mapping
@@ -53,6 +57,7 @@ private:
 	void gen_payment(uint64_t thd_id);
 	void gen_new_order(uint64_t thd_id);
 	void gen_order_status(uint64_t thd_id);
+	void gen_upsert_customer(uint64_t thd_id);
 };
 
 #endif

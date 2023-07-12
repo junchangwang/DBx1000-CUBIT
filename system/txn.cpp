@@ -11,6 +11,7 @@
 #include "index_bwtree.h"
 #include "index_art.h"
 #include "index_hash.h"
+#include "helper.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
@@ -219,6 +220,37 @@ txn_man::index_read(index_bwtree * index, idx_key_t key,  int part_id) {
 	std::vector<itemid_t *> items;
 	items = index->bwindex_read(key, part_id, get_thd_id());
 	return items;
+}
+
+void
+txn_man::index_insert(INDEX * index, uint64_t key, row_t * row, int64_t part_id) {
+	uint64_t pid = part_id;
+	if (part_id == -1)
+		pid = get_part_id(row);
+	itemid_t * m_item =
+		(itemid_t *) mem_allocator.alloc( sizeof(itemid_t), pid );
+	m_item->init();
+	m_item->type = DT_row;
+	m_item->location = row;
+	m_item->valid = true;
+
+    assert( index->index_insert(key, m_item, pid) == RCOK );
+}
+
+void
+txn_man::index_insert_with_primary_key(INDEX * index, uint64_t key, uint64_t primary_key, row_t * row, int64_t part_id) {
+	uint64_t pid = part_id;
+	if (part_id == -1)
+		pid = get_part_id(row);
+	itemid_t * m_item =
+		(itemid_t *) mem_allocator.alloc( sizeof(itemid_t), pid );
+	m_item->init();
+	m_item->type = DT_row;
+	m_item->location = row;
+	m_item->valid = true;
+	m_item->primary_key = primary_key;
+
+    assert( index->index_insert(key, m_item, pid) == RCOK );
 }
 
 RC txn_man::finish(RC rc) {

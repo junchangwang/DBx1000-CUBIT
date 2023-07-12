@@ -32,9 +32,9 @@ void loadKeyForTPCC(TID tid, Key &key) {
 
 RC tpcc_wl::init() 
 {
-#if TPCC_EVA_CUBIT
+//#if TPCC_EVA_CUBIT
 	init_bitmap_c_w_id();
-#endif
+//#endif
 	workload::init();
 	string path = "./benchmarks/";
 #if TPCC_SMALL
@@ -134,6 +134,10 @@ RC tpcc_wl::init_schema(const char * schema_file) {
     i_customers_art = (index_art *) _mm_malloc(sizeof(index_art), 64);
     new(i_customers_art) index_art();
     i_customers_art->init_with_loadkey(1, loadKeyForTPCC, t_customer);
+
+	i_customers_btree = (index_btree *)_mm_malloc(sizeof(index_btree), 64);
+	new (i_customers_btree) index_btree();
+	i_customers_btree->init(1, t_customer);
 
 	return RCOK;
 }
@@ -369,21 +373,21 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 		key = custKey(cid, did, wid);
 		index_insert(i_customer_id, key, row, wh_to_part(wid));
 
-#if TPCC_EVA_CUBIT
+//#if TPCC_EVA_CUBIT
 		key = distKey(did - 1, wid - 1);
 		index_insert(i_customers, key, row, wh_to_part(wid));
 
 		index_insert((INDEX *)i_customers_bwtree, key, row, 0);
 		index_insert_with_primary_key((INDEX *)i_customers_art, key, (uint64_t)cid, row, 0);
+		index_insert(i_customers_btree, key, row);
 
 		if (bitmap_c_w_id->config->approach == "naive" ) {
 			bitmap_c_w_id->append(0, key);
-		}
-		else if (bitmap_c_w_id->config->approach == "nbub-lk") {
+		} else if (bitmap_c_w_id->config->approach == "nbub-lk") {
 			nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub *>(bitmap_c_w_id);
 			bitmap->__init_append(0, key*g_cust_per_dist+(cid-1), key);
 		}
-#endif
+//#endif
 	}
 	i_customers_bwtree->UnregisterThread(0);
 }

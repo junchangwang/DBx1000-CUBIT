@@ -47,6 +47,7 @@ public:
 
 	index_bwtree * i_customers_bwtree;
 	index_art * i_customers_art;
+	index_btree *i_customers_btree;
 
 	BaseTable *bitmap_c_w_id;
 	
@@ -88,6 +89,7 @@ private:
 	RC run_delivery(tpcc_query * query);
 	RC run_stock_level(tpcc_query * query);
 	RC evaluate_index(int tid, tpcc_query *query);
+	RC run_upsert_customer(tpcc_query *query);
 };
 
 #endif

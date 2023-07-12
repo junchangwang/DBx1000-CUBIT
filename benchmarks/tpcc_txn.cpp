@@ -11,6 +11,7 @@
 #include "index_bwtree.h"
 #include "index_art.h"
 #include "tpcc_const.h"
+#include "txn.h"
 
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -27,12 +28,14 @@ RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 			return run_payment(m_query); break;
 		case TPCC_NEW_ORDER :
 			return run_new_order(m_query); break;
-/*		case TPCC_ORDER_STATUS :
-			return run_order_status(m_query); break;
-		case TPCC_DELIVERY :
-			return run_delivery(m_query); break;
-		case TPCC_STOCK_LEVEL :
-			return run_stock_level(m_query); break;*/
+		case TPCC_UPSERT_CUSTOMER :
+			return run_upsert_customer(m_query); break;
+			/*		case TPCC_ORDER_STATUS :
+						return run_order_status(m_query); break;
+					case TPCC_DELIVERY :
+						return run_delivery(m_query); break;
+					case TPCC_STOCK_LEVEL :
+						return run_stock_level(m_query); break;*/
 		default:
 			assert(false);
 	}
@@ -741,5 +744,52 @@ tpcc_txn_man::run_delivery(tpcc_query * query) {
 
 RC 
 tpcc_txn_man::run_stock_level(tpcc_query * query) {
+	return RCOK;
+}
+
+RC 
+tpcc_txn_man::run_upsert_customer(tpcc_query * query) {
+	itemid_t *item;
+	uint64_t key = distKey(query->c_d_id - 1, query->c_w_id - 1);
+	item = index_read(_wl->i_customers, key, wh_to_part(query->c_w_id));
+	while (item != NULL) {
+		row_t *r_cust = (row_t *)item->location;
+		uint64_t read_c_id = 0;
+		r_cust->get_value(C_ID, read_c_id);
+		if (read_c_id == query->c_id) {
+			r_cust->set_value(C_D_ID, query->new_c_d_id);
+			return RCOK;
+		}
+		item = item->next;
+	}
+
+	row_t *row;
+	uint64_t row_id;
+	_wl->t_customer->get_new_row(row, 0, row_id);
+	row->set_primary_key(query->c_id);
+	row->set_value(C_ID, query->c_id);		
+	row->set_value(C_D_ID, query->c_d_id);
+	row->set_value(C_W_ID, query->c_w_id);
+	row->set_value(C_LAST, query->c_last);
+	insert_row(row, _wl->t_customer);
+
+	index_insert(_wl->i_customers, key, row, wh_to_part(query->c_w_id));
+	_wl->i_customers_bwtree->UpdateThreadLocal(g_thread_cnt);
+	_wl->i_customers_bwtree->AssignGCID(0);
+	index_insert((INDEX *)_wl->i_customers_bwtree, key, row, 0);
+	_wl->i_customers_bwtree->UnregisterThread(0);
+	index_insert_with_primary_key((INDEX *)_wl->i_customers_art, key, (uint64_t)query->c_id, row, 0);
+	index_insert(_wl->i_customers_btree, key, row, 0);
+
+	if (_wl->bitmap_c_w_id->config->approach == "naive" ) {
+		_wl->bitmap_c_w_id->append(0, key);
+	} else if (_wl->bitmap_c_w_id->config->approach == "nbub-lk") {
+		nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub *>(_wl->bitmap_c_w_id);
+		bitmap->__init_append(0, key*g_cust_per_dist+(query->c_id-1), key);
+	}
+
+
+
+
 	return RCOK;
 }

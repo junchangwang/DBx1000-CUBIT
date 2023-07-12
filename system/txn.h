@@ -94,14 +94,18 @@ public:
 	void 			index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item);
 	std::vector<itemid_t *> index_read(index_bwtree * index, idx_key_t key, int part_id);
 	row_t * 		get_row(row_t * row, access_t type);
-protected:	
-	void 			insert_row(row_t * row, table_t * table);
+	void index_insert(INDEX *index, uint64_t key, row_t *row, int64_t part_id);
+	void index_insert_with_primary_key(INDEX *index, uint64_t key, uint64_t primary_key, row_t *row, int64_t part_id);
+
+protected:
+	void insert_row(row_t *row, table_t *table);
+
 private:
 	// insert rows
-	uint64_t 		insert_cnt;
-	row_t * 		insert_rows[MAX_ROW_PER_TXN];
-	txnid_t 		txn_id;
-	ts_t 			timestamp;
+	uint64_t insert_cnt;
+	row_t *insert_rows[MAX_ROW_PER_TXN];
+	txnid_t txn_id;
+	ts_t timestamp;
 
 	bool _write_copy_ptr;
 #if CC_ALG == TICTOC || CC_ALG == SILO
@@ -119,4 +123,4 @@ private:
 #elif CC_ALG == HEKATON
 	RC 				validate_hekaton(RC rc);
 #endif
-};
+	};

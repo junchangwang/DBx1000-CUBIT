@@ -56,6 +56,7 @@ UInt32 g_init_parallelism = INIT_PARALLELISM;
 
 UInt32 g_num_wh = NUM_WH;
 double g_perc_payment = PERC_PAYMENT;
+double g_perc_new_order = PERC_NEW_ORDER;
 bool g_wh_update = WH_UPDATE;
 char * output_file = NULL;
 char * Mode = NULL;
@@ -79,5 +80,5 @@ UInt32 g_max_items = 15000;
 UInt32 g_cust_per_dist = 3000;
 #else 
 UInt32 g_max_items = 100000;
-UInt32 g_cust_per_dist = 3000;
+UInt32 g_cust_per_dist = 20000;
 #endif

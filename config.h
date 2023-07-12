@@ -112,7 +112,7 @@
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
-#define MAX_TXN_PER_PART 			100
+#define MAX_TXN_PER_PART 			1000
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
@@ -137,14 +137,15 @@
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
 #define NUM_WH 						1
-#define TPCC_EVA_CUBIT				2
+#define TPCC_EVA_CUBIT				false
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
 				TPCC_NEW_ORDER, 
 				TPCC_ORDER_STATUS, 
 				TPCC_DELIVERY, 
-				TPCC_STOCK_LEVEL};
+				TPCC_STOCK_LEVEL,
+				TPCC_UPSERT_CUSTOMER};
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 enum TPCHTxnType {TPCH_ALL,
@@ -162,6 +163,7 @@ extern TPCHTxnType 					g_tpch_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
 #define PERC_PAYMENT 				0.5
+#define PERC_NEW_ORDER 				0.90
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16

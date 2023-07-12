@@ -5,6 +5,7 @@
 #include "mem_alloc.h"
 #include "wl.h"
 #include "table.h"
+#include "global.h"
 
 void tpcc_query::init(uint64_t thd_id, workload * h_wl) {
 	double x = (double)(rand() % 100) / 100.0;
@@ -12,8 +13,10 @@ void tpcc_query::init(uint64_t thd_id, workload * h_wl) {
 		mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
 	if (x < g_perc_payment)
 		gen_payment(thd_id);
-	else 
+	else if (x < g_perc_new_order)
 		gen_new_order(thd_id);
+	else
+		gen_upsert_customer(thd_id);
 }
 
 void tpcc_query::gen_payment(uint64_t thd_id) {
@@ -132,4 +135,35 @@ tpcc_query::gen_order_status(uint64_t thd_id) {
 		by_last_name = false;
 		c_id = NURand(1023, 1, g_cust_per_dist, w_id-1);
 	}
+}
+
+void 
+tpcc_query::gen_upsert_customer(uint64_t thd_id) {
+	type = TPCC_UPSERT_CUSTOMER;
+	c_id = NURand(1023, 1, g_cust_per_dist, w_id - 1);
+	if (FIRST_PART_LOCAL)
+		w_id = thd_id % g_num_wh + 1;
+	else
+		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
+	d_w_id = w_id;
+
+	d_id = URand(1, DIST_PER_WARE, w_id-1);
+	int x = URand(1, 100, w_id-1);
+	int y = URand(1, 100, w_id-1);
+
+
+	if(x <= 85) { 
+		// home warehouse
+		c_d_id = d_id;
+		c_w_id = w_id;
+	} else {	
+		// remote warehouse
+		c_d_id = URand(1, DIST_PER_WARE, w_id-1);
+		if(g_num_wh > 1) {
+			while((c_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
+		} else 
+			c_w_id = w_id;
+	}
+	Lastname(NURand(255,0,999,w_id-1), c_last);
+	new_c_d_id = c_d_id + 1;
 }
