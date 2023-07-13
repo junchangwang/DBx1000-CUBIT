@@ -215,8 +215,8 @@ int main(int argc, char* argv[])
 	}
 	auto end = std::chrono::high_resolution_clock::now();
 	long  long time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-	cout << "HashTable: Loop times: " << tmp << ". Found string times: " << cnt << ". Microseconds: " << time_elapsed_ms << endl;
-	cout << "Memory concumption (Bytes): " << index->index_size() << endl;
+	cout << "HashTable: Loop times: " << tmp << ". Microseconds: " << time_elapsed_ms;
+	cout << ". Memory concumption (Bytes): " << index->index_size() << endl;
 
 	start = std::chrono::high_resolution_clock::now();
 	_wl->i_customers_bwtree->AssignGCID(0);
@@ -230,12 +230,12 @@ int main(int argc, char* argv[])
 	}
 	end = std::chrono::high_resolution_clock::now();
 	time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-	cout << "BwTree:  " << " Microseconds: " << time_elapsed_ms << endl;
-	cout << "Memory concumption (Bytes): " << _wl->i_customers_bwtree->index_size() << endl;
+	cout << "BwTree:  Loop times: " << items.size() << ". Microseconds: " << time_elapsed_ms;
+	cout << ". Memory concumption (Bytes): " << _wl->i_customers_bwtree->index_size() << endl;
 
 	start = std::chrono::high_resolution_clock::now();
 	item = index_read((INDEX *)_wl->i_customers_art, key, 0);
-	for (int tmp = 0; item; tmp++) {
+	for (tmp = 0; item; tmp++) {
 		row_t *r_cust = ((row_t *)item->location);
 		if (r_cust == NULL) {
 			return RCOK;
@@ -244,12 +244,12 @@ int main(int argc, char* argv[])
 	}
 	end = std::chrono::high_resolution_clock::now();
 	time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-	cout << "ART: " << " Microseconds: " << time_elapsed_ms << endl;
-	cout << "Memory concumption (Bytes): " << _wl->i_customers_art->index_size() << endl;
+	cout << "ART: Loop times: " << tmp << ". Microseconds: " << time_elapsed_ms;
+	cout << ". Memory concumption (Bytes): " << _wl->i_customers_art->index_size() << endl;
 
 	start = std::chrono::high_resolution_clock::now();
 	item = index_read((INDEX *)_wl->i_customers_btree, key, 0);
-	for (int tmp = 0; item; tmp++) {
+	for (tmp = 0; item; tmp++) {
 		row_t *r_cust = ((row_t *)item->location);
 		if (r_cust == NULL) {
 			return RCOK;
@@ -258,8 +258,8 @@ int main(int argc, char* argv[])
 	}
 	end = std::chrono::high_resolution_clock::now();
 	time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-	cout << "BTree: " << " Microseconds: " << time_elapsed_ms << endl;
-	cout << "Memory concumption (Bytes): " << _wl->i_customers_art->index_size() << endl;
+	cout << "BTree: Loop times: " << tmp << ". Microseconds: " << time_elapsed_ms;
+	cout << ". Memory concumption (Bytes): " << _wl->i_customers_art->index_size() << endl;
 
 	start = std::chrono::high_resolution_clock::now();
 	nbub::Nbub *_bitmap = dynamic_cast<nbub::Nbub *>(_wl->bitmap_c_w_id);
@@ -267,8 +267,8 @@ int main(int argc, char* argv[])
 	tmp = _bitmap->bitmaps[key]->btv->count();
 	end = std::chrono::high_resolution_clock::now();
 	time_elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-	cout << "Bitmap: Loop times: " << tmp << ". Found string times: " << cnt << 
-			". Microseconds: " << time_elapsed_ms << ". Memory concumption (Bytes): " << endl;
+	cout << "Bitmap: Loop times: " << tmp << ". Microseconds: " << time_elapsed_ms;
+	cout << ". Memory concumption (Bytes): " << endl;
 	dynamic_cast<nbub_lk::NbubLK *>(_bitmap)->printMemory();
 
 

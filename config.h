@@ -163,7 +163,7 @@ extern TPCHTxnType 					g_tpch_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
 #define PERC_PAYMENT 				0.5
-#define PERC_NEW_ORDER 				0.90
+#define PERC_NEW_ORDER 				0.96
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16
