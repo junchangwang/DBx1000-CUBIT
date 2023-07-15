@@ -1,7 +1,3 @@
-//
-// Created by chien on 6/1/23.
-//
-
 #ifndef DBX1000_INDEX_ART_H
 #define DBX1000_INDEX_ART_H
 

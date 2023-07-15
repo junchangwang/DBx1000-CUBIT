@@ -1,7 +1,3 @@
-//
-// Created by chien on 6/2/23.
-//
-
 #include <cstdio>
 
 #include "row.h"
