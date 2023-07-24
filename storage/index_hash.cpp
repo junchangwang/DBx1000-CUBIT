@@ -32,11 +32,15 @@ int IndexHash::index_size()
 				size += sizeof(*bucket);
 				size += sizeof(*cur_node);
 				while (cur_node != NULL) {
-					item = cur_node->items;
-					while (item != NULL) {
-						item_cnt ++;
+					// item = cur_node->items;
+					// while (item != NULL) {
+					// 	item_cnt ++;
+					// 	size += sizeof(*item);
+					// 	item = item->next;
+					// }
+					for (auto item : cur_node->items) {
+						item_cnt++;
 						size += sizeof(*item);
-						item = item->next;
 					}
 					cur_node = cur_node->next;
 					size += sizeof(*cur_node);
@@ -95,29 +99,28 @@ RC IndexHash::index_insert(idx_key_t key, itemid_t * item, int part_id) {
 	return rc;
 }
 
-RC IndexHash::index_read(idx_key_t key, itemid_t * &item, int part_id) {
+RC IndexHash::index_read(idx_key_t key, std::vector<itemid_t *> &items, int part_id) {
 	uint64_t bkt_idx = hash(key);
 	assert(bkt_idx < _bucket_cnt_per_part);
 	BucketHeader * cur_bkt = &_buckets[part_id][bkt_idx];
 	RC rc = RCOK;
 	// 1. get the sh latch
 //	get_latch(cur_bkt);
-	cur_bkt->read_item(key, item, table->get_table_name());
+	cur_bkt->read_items(key, items, table->get_table_name());
 	// 3. release the latch
 //	release_latch(cur_bkt);
 	return rc;
 
 }
 
-RC IndexHash::index_read(idx_key_t key, itemid_t * &item, 
-						int part_id, int thd_id) {
+RC IndexHash::index_read(idx_key_t key, std::vector<itemid_t *> &items, int part_id, int thd_id) {
 	uint64_t bkt_idx = hash(key);
 	assert(bkt_idx < _bucket_cnt_per_part);
 	BucketHeader * cur_bkt = &_buckets[part_id][bkt_idx];
 	RC rc = RCOK;
 	// 1. get the sh latch
 //	get_latch(cur_bkt);
-	cur_bkt->read_item(key, item, table->get_table_name());
+	cur_bkt->read_items(key, items, table->get_table_name());
 	// 3. release the latch
 //	release_latch(cur_bkt);
 	return rc;
@@ -175,42 +178,51 @@ void BucketHeader::insert_item(idx_key_t key,
 		BucketNode * new_node = (BucketNode *) 
 			mem_allocator.alloc(sizeof(BucketNode), part_id );
 		new_node->init(key);
-		new_node->items = item;
-		if (prev_node != NULL) {
+		new_node->items.push_back(item);
+		if (prev_node != NULL)
+		{
 			new_node->next = prev_node->next;
 			prev_node->next = new_node;
-		} else {
+		}
+		else
+		{
 			new_node->next = first_node;
 			first_node = new_node;
 		}
 	} else {
 #ifdef ORDERED_LEAF_LIST
-		if (cur_node->items == NULL) {
-			cur_node->items = item;
-		} else {
-			if (item->primary_key <= cur_node->items->primary_key) {
-				item->next = cur_node->items->next;
-				cur_node->items->next = item;
-			} else {
-				itemid_t* current = cur_node->items;
-				itemid_t* prior = current;
-				current = current->next;
-				while (current != NULL && item->primary_key >= current->primary_key) {
-					current = current->next;
-					prior = prior->next;
-				}
-				prior->next = item;
-				item->next = current;
-			}
-		}
+		// if (cur_node->items == NULL) {
+		// 	cur_node->items = item;
+		// } else {
+		// 	if (item->primary_key <= cur_node->items->primary_key) {
+		// 		item->next = cur_node->items->next;
+		// 		cur_node->items->next = item;
+		// 	} else {
+		// 		itemid_t* current = cur_node->items;
+		// 		itemid_t* prior = current;
+		// 		current = current->next;
+		// 		while (current != NULL && item->primary_key >= current->primary_key) {
+		// 			current = current->next;
+		// 			prior = prior->next;
+		// 		}
+		// 		prior->next = item;
+		// 		item->next = current;
+		// 	}
+		// }
+		auto it = std::lower_bound(cur_node->items.begin(), cur_node->items.end(), item,
+								   [](itemid_t *x, itemid_t *y) {
+									   return x->primary_key < y->primary_key;
+								   });
+		cur_node->items.insert(it, item);
 #else
-		item->next = cur_node->items;
-		cur_node->items = item;
+		// item->next = cur_node->items;
+		// cur_node->items = item;
+		cur_node->items.push_back(item);
 #endif
 	}
 }
 
-void BucketHeader::read_item(idx_key_t key, itemid_t * &item, const char * tname) 
+void BucketHeader::read_items(idx_key_t key, std::vector<itemid_t *> &items, const char * tname) 
 {
 	BucketNode * cur_node = first_node;
 	while (cur_node != NULL) {
@@ -220,10 +232,7 @@ void BucketHeader::read_item(idx_key_t key, itemid_t * &item, const char * tname
 	}
 	// M_ASSERT(cur_node->key == key, "Key does not exist!");
 
-	if (cur_node)
-		item = cur_node->items;
-	else
-		item = NULL;
+	items = cur_node->items;
 }
 
 bool BucketHeader::exist_item(idx_key_t key) 
