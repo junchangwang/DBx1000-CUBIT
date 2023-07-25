@@ -9,8 +9,8 @@
 
 void loadKey(TID tid, Key &key) {
     key.setKeyLen(sizeof(tid));
-    itemid_t * item = reinterpret_cast<itemid_t *>(tid);
-    row_t * row = (row_t *)item->location;
+    auto items = *(reinterpret_cast<std::vector<itemid_t *> *>(tid));
+    row_t * row = (row_t *)items[0]->location;
 
     uint64_t shipdate;
     row->get_value(L_SHIPDATE, shipdate);
@@ -94,27 +94,27 @@ RC index_art::index_insert(idx_key_t key, itemid_t * item, int part_id) {
 }
 
 
-RC index_art::index_read(idx_key_t key, itemid_t * &item, int part_id) {
+RC index_art::index_read(idx_key_t key, std::vector<itemid_t *> &items, int part_id) {
     ART_OLC::Tree * root = find_root(part_id);
     assert(root != NULL);
 
     ART::ThreadInfo thread_info = root->getThreadInfo();
     Key k;
     k.setInt(key);
-    TID tid = root->lookup(k, thread_info);
-    item = reinterpret_cast<itemid_t *>(tid);
+    auto tid = root->lookup(k, thread_info);
+    items = *(reinterpret_cast<std::vector<itemid_t *> *>(tid));
     return RCOK;
 }
 
-RC index_art::index_read(idx_key_t key, itemid_t * &item, int part_id, int thd_id) {
+RC index_art::index_read(idx_key_t key, std::vector<itemid_t *> &items, int part_id, int thd_id) {
     ART_OLC::Tree * root = find_root(part_id);
     assert(root != NULL);
 
     ART::ThreadInfo thread_info = root->getThreadInfo();
     Key k;
     k.setInt(key);
-    TID tid = root->lookup(k, thread_info);
-    item = reinterpret_cast<itemid_t *>(tid);
+    auto tid = root->lookup(k, thread_info);
+    items = *(reinterpret_cast<std::vector<itemid_t *> *>(tid));
     return RCOK;
 }
 

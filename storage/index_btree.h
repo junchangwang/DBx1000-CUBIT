@@ -2,6 +2,7 @@
 #define _BTREE_H_
 
 #include <shared_mutex>
+#include <algorithm>
 #include "global.h"
 #include "helper.h"
 #include "index_base.h"

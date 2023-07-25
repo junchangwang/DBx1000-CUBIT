@@ -36,7 +36,7 @@ namespace ART_OLC {
           _mm_pause();
     }
 
-    TID Tree::lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const {
+    std::vector<itemid_t *> * Tree::lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const {
         EpocheGuardReadonly epocheGuard(threadEpocheInfo);
         int restartCount = 0;
     restart:
@@ -82,7 +82,7 @@ namespace ART_OLC {
                         if (level < k.getKeyLen() - 1 || optimisticPrefixMatch) {
                             return checkKey(tid, k);
                         }
-                        return tid;
+                        return reinterpret_cast<std::vector<itemid_t *> *>(tid);
                     }
                     level++;
             }
@@ -346,11 +346,11 @@ namespace ART_OLC {
     }
 
 
-    TID Tree::checkKey(const TID tid, const Key &k) const {
+    std::vector<itemid_t *> * Tree::checkKey(const TID tid, const Key &k) const {
         Key kt;
         this->loadKey(tid, kt);
         if (k == kt) {
-            return tid;
+            return reinterpret_cast<std::vector<itemid_t *> *>(tid);
         }
         return 0;
     }
@@ -398,7 +398,8 @@ namespace ART_OLC {
                     auto newNode = new N4(node->getPrefix(), nextLevel - level);
 
                     // 2)  add node and (tid, *k) as children
-                    newNode->insert(k[nextLevel], N::setLeaf(tid));
+                    std::vector<itemid_t *> v{(itemid_t *)tid};
+                    newNode->insert(k[nextLevel], N::setLeaf((TID)&v));
                     newNode->insert(nonMatchingKey, node);
 
                     // 3) upgradeToWriteLockOrRestart, update parentNode to point to the new node, unlock
@@ -440,33 +441,42 @@ namespace ART_OLC {
                 loadKey(N::getLeaf(nextNode), key);
 
                 if (key == k) {
-                    // upsert
-                    // N::change(node, k[level], N::setLeaf(tid));
                     N *target = N::getChild(k[level], node);
                     TID target_tid = N::getLeaf(target);
-                    itemid_t *target_item = reinterpret_cast<itemid_t *>(target_tid);
-                    N *new_node = N::setLeaf(tid);
-                    itemid_t * new_item = reinterpret_cast<itemid_t *>(tid);
-#ifdef ORDERED_LEAF_LIST
-                    if (new_item->primary_key <= target_item->primary_key) {
-                        N::change(node, k[level], new_node);
-                        new_item->next = target_item;
-                    } else {
-                        itemid_t *current_item = target_item;
-                        itemid_t *prior_item = current_item;
-                        current_item = current_item->next;
-                        while (current_item != NULL && new_item->primary_key >= current_item->primary_key) {
-                            current_item = current_item->next;
-                            prior_item = prior_item->next;
-                        }
-                        prior_item->next = new_item;
-                        new_item->next = current_item;
-                    }
-#else
+                    auto items = *reinterpret_cast<std::vector<itemid_t *> *>(target_tid);
+                    auto it = std::lower_bound(items.begin(), items.end(), (itemid_t *)tid,
+                                            [](itemid_t *x, itemid_t *y) {
+                                                return x->primary_key < y->primary_key;
+                                            });
+                    items.insert(it, (itemid_t *)tid);
 
-                    N::change(node, k[level], new_node);
-                    new_item->next = target_item;
-#endif
+                        // upsert
+                        // N::change(node, k[level], N::setLeaf(tid));
+//                         N *target = N::getChild(k[level], node);
+//                         TID target_tid = N::getLeaf(target);
+//                         itemid_t *target_item = reinterpret_cast<itemid_t *>(target_tid);
+//                         N *new_node = N::setLeaf(tid);
+//                         itemid_t *new_item = reinterpret_cast<itemid_t *>(tid);
+// #ifdef ORDERED_LEAF_LIST
+//                     if (new_item->primary_key <= target_item->primary_key) {
+//                         N::change(node, k[level], new_node);
+//                         new_item->next = target_item;
+//                     } else {
+//                         itemid_t *current_item = target_item;
+//                         itemid_t *prior_item = current_item;
+//                         current_item = current_item->next;
+//                         while (current_item != NULL && new_item->primary_key >= current_item->primary_key) {
+//                             current_item = current_item->next;
+//                             prior_item = prior_item->next;
+//                         }
+//                         prior_item->next = new_item;
+//                         new_item->next = current_item;
+//                     }
+// #else
+
+//                     N::change(node, k[level], new_node);
+//                     new_item->next = target_item;
+// #endif
 
                     node->writeUnlock();
                     return;
@@ -479,7 +489,8 @@ namespace ART_OLC {
                 }
 
                 auto n4 = new N4(&k[level], prefixLength);
-                n4->insert(k[level + prefixLength], N::setLeaf(tid));
+                std::vector<itemid_t *> v{(itemid_t *)tid};
+                n4->insert(k[level + prefixLength], N::setLeaf((TID)&v));
                 n4->insert(key[level + prefixLength], nextNode);
                 N::change(node, k[level - 1], n4);
                 node->writeUnlock();
@@ -608,10 +619,9 @@ namespace ART_OLC {
 
                 if (N::isLeaf(node)) {
                     TID tid = N::getLeaf(node);
-                    itemid_t *item = reinterpret_cast<itemid_t *>(tid);
-                    while (item != nullptr) {
+                    auto items = *reinterpret_cast<std::vector<itemid_t *> *>(tid);
+                    for (auto item : items) {
                         size += sizeof(*item);
-                        item = item->next;
                     }
                     queue.pop();
                     continue;

@@ -19,7 +19,7 @@ namespace ART_OLC {
     private:
         N *const root;
 
-        TID checkKey(const TID tid, const Key &k) const;
+        std::vector<itemid_t *> * checkKey(const TID tid, const Key &k) const;
 
         LoadKeyFunction loadKey;
 
@@ -70,7 +70,7 @@ namespace ART_OLC {
 
         ART::ThreadInfo getThreadInfo();
 
-        TID lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const;
+        std::vector<itemid_t *> * lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const;
 
         bool lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[], std::size_t resultLen,
                          std::size_t &resultCount, ART::ThreadInfo &threadEpocheInfo) const;

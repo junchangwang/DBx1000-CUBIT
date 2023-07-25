@@ -496,8 +496,12 @@ RC index_btree::insert_into_leaf(glob_param params, bt_node * leaf, idx_key_t ke
 			std::vector<itemid_t *> v{item};
 			leaf->pointers[idx] = (void *)&v;
 		} else {
-			auto items = (std::vector<itemid_t *> *)leaf->pointers[idx];
-			items->push_back(item);
+			auto items = *(std::vector<itemid_t *> *)leaf->pointers[idx];
+			auto it = std::lower_bound(items.begin(), items.end(), item,
+									[](itemid_t *x, itemid_t *y) {
+										return x->primary_key < y->primary_key;
+									});
+			items.insert(it, item);
 		}
 		return RCOK;
 	}
@@ -547,7 +551,14 @@ RC index_btree::split_lf_insert(glob_param params, bt_node * leaf, idx_key_t key
 //	new_leaf->keys[insertion_index] = key;
 //	new_leaf->pointers[insertion_index] = item;
 	temp_keys[insertion_index] = key;
-	temp_pointers[insertion_index]->push_back(item);
+//	temp_pointers[insertion_index]->push_back(item);
+	auto items = *temp_pointers[insertion_index];
+	auto it = std::lower_bound(items.begin(), items.end(), item,
+							   [](itemid_t *x, itemid_t *y)
+							   {
+								   return x->primary_key < y->primary_key;
+							   });
+	items.insert(it, item);
 
 	// leaf is on the left of new_leaf
 	split = cut(order - 1);
