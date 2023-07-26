@@ -306,8 +306,8 @@ RC index_btree::start_new_tree(glob_param params, idx_key_t key, itemid_t * item
 	bt_node * root = roots[part_id % part_cnt];
 	assert(root != NULL);
 	root->keys[0] = key;
-	std::vector<itemid_t *> v{item};
-	root->pointers[0] = (void *)&v;
+	auto v = new std::vector<itemid_t *>{item};
+	root->pointers[0] = (void *)v;
 	root->parent = NULL;
 	root->num_keys++;
 	return RCOK;
@@ -493,8 +493,8 @@ RC index_btree::insert_into_leaf(glob_param params, bt_node * leaf, idx_key_t ke
 		// item->next = (itemid_t *)leaf->pointers[idx];
 		// leaf->pointers[idx] = (void *) item;
 		if (leaf->pointers[idx] == NULL) {
-			std::vector<itemid_t *> v{item};
-			leaf->pointers[idx] = (void *)&v;
+			auto v = new std::vector<itemid_t *>{item};
+			leaf->pointers[idx] = (void *)v;
 		} else {
 			auto items = *(std::vector<itemid_t *> *)leaf->pointers[idx];
 			auto it = std::lower_bound(items.begin(), items.end(), item,
@@ -513,8 +513,8 @@ RC index_btree::insert_into_leaf(glob_param params, bt_node * leaf, idx_key_t ke
 	}
 	leaf->keys[insertion_point] = key;
 	// leaf->pointers[insertion_point] = (void *)item;
-	std::vector<itemid_t *> v{item};
-	leaf->pointers[insertion_point] = (void *)&v;
+	auto v = new std::vector<itemid_t *>{item};
+	leaf->pointers[insertion_point] = (void *)v;
 	leaf->num_keys++;
 	M_ASSERT( (leaf->num_keys < order), "too many keys in leaf" );
 	return RCOK;
@@ -552,13 +552,18 @@ RC index_btree::split_lf_insert(glob_param params, bt_node * leaf, idx_key_t key
 //	new_leaf->pointers[insertion_index] = item;
 	temp_keys[insertion_index] = key;
 //	temp_pointers[insertion_index]->push_back(item);
-	auto items = *temp_pointers[insertion_index];
-	auto it = std::lower_bound(items.begin(), items.end(), item,
-							   [](itemid_t *x, itemid_t *y)
-							   {
-								   return x->primary_key < y->primary_key;
-							   });
-	items.insert(it, item);
+	if (temp_pointers[insertion_index] == NULL || temp_pointers[insertion_index] == nullptr) {
+		auto v = new std::vector<itemid_t *>{item};
+		temp_pointers[insertion_index] = v;
+	} else {
+		auto items = temp_pointers[insertion_index];
+		auto it = std::lower_bound(items->begin(), items->end(), item,
+								[](itemid_t *x, itemid_t *y)
+								{
+									return x->primary_key < y->primary_key;
+								});
+		items->insert(it, item);
+	}
 
 	// leaf is on the left of new_leaf
 	split = cut(order - 1);

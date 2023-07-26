@@ -119,18 +119,20 @@ RC index_bwtree::index_insert(idx_key_t key, itemid_t * item, int part_id) {
     return RCOK;
 }
 
-std::vector<itemid_t *> index_bwtree::bwindex_read(idx_key_t key, int part_id) {
+RC index_bwtree::index_read(idx_key_t key, std::vector<itemid_t *>&items, int part_id) {
     BwTreeType * root = find_root(part_id);
     std::vector<itemid_t *> item_list;
     root->GetValue(key, item_list);
-    return item_list;
+    items = item_list;
+    return RCOK;
 }
 
-std::vector<itemid_t *> index_bwtree::bwindex_read(idx_key_t key, int part_id, int thd_id) {
+RC index_bwtree::index_read(idx_key_t key, std::vector<itemid_t *>&items, int part_id, int thd_id) {
     BwTreeType * root = find_root(part_id);
     std::vector<itemid_t *> item_list;
     root->GetValue(key, item_list);
-    return item_list;
+    items = item_list;
+    return RCOK;
 }
 
 RC index_bwtree::index_remove(idx_key_t key) {

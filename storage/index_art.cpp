@@ -66,8 +66,9 @@ bool index_art::index_exist(idx_key_t key) {
     Key k;
     k.setInt(key);
     TID tid = root->lookup(k, thread_info);
-    
-    return tid > 0;
+    auto items = reinterpret_cast<std::vector<itemid_t *> *>(tid);
+
+    return items->size() > 0;
 }
 
 bool index_art::index_exist(idx_key_t key, int part_id) {
@@ -78,8 +79,9 @@ bool index_art::index_exist(idx_key_t key, int part_id) {
     Key k;
     k.setInt(key);
     TID tid = root->lookup(k, thread_info);
-    
-    return tid > 0;
+    auto items = reinterpret_cast<std::vector<itemid_t *> *>(tid);
+
+    return items->size() > 0;
 }
 
 RC index_art::index_insert(idx_key_t key, itemid_t * item, int part_id) {

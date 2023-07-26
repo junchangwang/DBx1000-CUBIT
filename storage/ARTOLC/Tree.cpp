@@ -36,7 +36,7 @@ namespace ART_OLC {
           _mm_pause();
     }
 
-    std::vector<itemid_t *> * Tree::lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const {
+    TID Tree::lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const {
         EpocheGuardReadonly epocheGuard(threadEpocheInfo);
         int restartCount = 0;
     restart:
@@ -82,7 +82,7 @@ namespace ART_OLC {
                         if (level < k.getKeyLen() - 1 || optimisticPrefixMatch) {
                             return checkKey(tid, k);
                         }
-                        return reinterpret_cast<std::vector<itemid_t *> *>(tid);
+                        return tid;
                     }
                     level++;
             }
@@ -346,11 +346,11 @@ namespace ART_OLC {
     }
 
 
-    std::vector<itemid_t *> * Tree::checkKey(const TID tid, const Key &k) const {
+    TID Tree::checkKey(const TID tid, const Key &k) const {
         Key kt;
         this->loadKey(tid, kt);
         if (k == kt) {
-            return reinterpret_cast<std::vector<itemid_t *> *>(tid);
+            return tid;
         }
         return 0;
     }
@@ -398,8 +398,8 @@ namespace ART_OLC {
                     auto newNode = new N4(node->getPrefix(), nextLevel - level);
 
                     // 2)  add node and (tid, *k) as children
-                    std::vector<itemid_t *> v{(itemid_t *)tid};
-                    newNode->insert(k[nextLevel], N::setLeaf((TID)&v));
+                    auto v = new std::vector<itemid_t *>{(itemid_t *)tid};
+                    newNode->insert(k[nextLevel], N::setLeaf((TID)v));
                     newNode->insert(nonMatchingKey, node);
 
                     // 3) upgradeToWriteLockOrRestart, update parentNode to point to the new node, unlock
@@ -423,8 +423,10 @@ namespace ART_OLC {
             if (needRestart) goto restart;
 
             if (nextNode == nullptr) {
-                N::insertAndUnlock(node, v, parentNode, parentVersion, parentKey, nodeKey, N::setLeaf(tid), needRestart, epocheInfo);
-                if (needRestart) goto restart;
+                auto vec = new std::vector<itemid_t *>{(itemid_t *)tid};
+                N::insertAndUnlock(node, v, parentNode, parentVersion, parentKey, nodeKey, N::setLeaf((TID)vec), needRestart, epocheInfo);
+                if (needRestart)
+                    goto restart;
                 return;
             }
 
@@ -489,8 +491,8 @@ namespace ART_OLC {
                 }
 
                 auto n4 = new N4(&k[level], prefixLength);
-                std::vector<itemid_t *> v{(itemid_t *)tid};
-                n4->insert(k[level + prefixLength], N::setLeaf((TID)&v));
+                auto v = new std::vector<itemid_t *>{(itemid_t *)tid};
+                n4->insert(k[level + prefixLength], N::setLeaf((TID)v));
                 n4->insert(key[level + prefixLength], nextNode);
                 N::change(node, k[level - 1], n4);
                 node->writeUnlock();

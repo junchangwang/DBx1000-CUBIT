@@ -205,13 +205,12 @@ RC tpch_txn_man::run_Q6_hash(int tid, tpch_query * query, IndexHash *index)
 				}
 
 				auto start1 = std::chrono::high_resolution_clock::now();
-				itemid_t *item = index_read((INDEX *)index, key, 0);
+				std::vector<itemid_t *> items{index_read((INDEX *)index, key, 0)};
 				auto end1 = std::chrono::high_resolution_clock::now();
 				index_read_us += std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
 				auto start2 = std::chrono::high_resolution_clock::now();
-				for (itemid_t *local_item = item; local_item != NULL; local_item = local_item->next)
-				{
-					item_list.push_back(local_item);
+				for (auto item : items) {
+					item_list.push_back(item);
 					cnt ++;
 				}
 				auto end2 = std::chrono::high_resolution_clock::now();
@@ -306,12 +305,12 @@ RC tpch_txn_man::run_Q6_btree(int tid, tpch_query * query, index_btree *index)
 				}
 
 				auto start1 = std::chrono::high_resolution_clock::now();
-				itemid_t * item = index_read(index, key, 0);
+				std::vector<itemid_t *> items{index_read(index, key, 0)};
 				auto end1 = std::chrono::high_resolution_clock::now();
 				index_read_us += std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
 				auto start2 = std::chrono::high_resolution_clock::now();
-				for (itemid_t * local_item = item; local_item != NULL; local_item = local_item->next) {
-					item_list.push_back(local_item);
+				for (auto item : items) {
+					item_list.push_back(item);
 					cnt ++;
 				}
 				auto end2 = std::chrono::high_resolution_clock::now();
@@ -403,7 +402,8 @@ RC tpch_txn_man::run_Q6_bwtree(int tid, tpch_query *query, index_bwtree *index) 
                 }
 
 				auto start1 = std::chrono::high_resolution_clock::now();
-                vector<itemid_t *> items = index_read(index, key, 0);
+				vector<itemid_t *> items;
+				index_read((INDEX *) index, key, 0, items);
 				auto end1 = std::chrono::high_resolution_clock::now();
 				index_read_us += std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
 				auto start2 = std::chrono::high_resolution_clock::now();
@@ -504,12 +504,12 @@ RC tpch_txn_man::run_Q6_art(int tid, tpch_query * query, index_art *index)
 				}
 
 				auto start1 = std::chrono::high_resolution_clock::now();
-				itemid_t * item = index_read((INDEX *)index, key, 0);
+				std::vector<itemid_t *> items{index_read((INDEX *)index, key, 0)};
 				auto end1 = std::chrono::high_resolution_clock::now();
 				index_read_us += std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
 				auto start2 = std::chrono::high_resolution_clock::now();
-				for (itemid_t * local_item = item; local_item != NULL; local_item = local_item->next) {
-					item_list.push_back(local_item);
+				for (auto item : items) {
+					item_list.push_back(item);
 					cnt ++;
 				}
 				auto end2 = std::chrono::high_resolution_clock::now();
@@ -852,7 +852,7 @@ RC tpch_txn_man::run_RF2(int tid)
 	if ( !index1->index_exist(key1, 0)) {
 		return finish(Abort);
 	}
-	itemid_t * item1 = index_read(index1, key1, 0);
+	itemid_t * item1 = index_read(index1, key1, 0)[0];
 
 	row_t * row1 = ((row_t *)item1->location);
 	// Delete the row
@@ -881,7 +881,7 @@ RC tpch_txn_man::run_RF2(int tid)
 		if (!index2->index_exist(key2, 0)) {
 			continue;
 		}
-		itemid_t * item2 = index_read(index2, key2, 0);
+		itemid_t * item2 = index_read(index2, key2, 0)[0];
 		if (!item2)
 			continue;
 		row_t * row2 = ((row_t *)item2->location);

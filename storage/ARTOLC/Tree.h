@@ -8,6 +8,8 @@
 #include <queue>
 #include <utility>
 
+#include "helper.h"
+
 using namespace ART;
 
 namespace ART_OLC {
@@ -19,7 +21,7 @@ namespace ART_OLC {
     private:
         N *const root;
 
-        std::vector<itemid_t *> * checkKey(const TID tid, const Key &k) const;
+        TID checkKey(const TID tid, const Key &k) const;
 
         LoadKeyFunction loadKey;
 
@@ -70,7 +72,7 @@ namespace ART_OLC {
 
         ART::ThreadInfo getThreadInfo();
 
-        std::vector<itemid_t *> * lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const;
+        TID lookup(const Key &k, ART::ThreadInfo &threadEpocheInfo) const;
 
         bool lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[], std::size_t resultLen,
                          std::size_t &resultCount, ART::ThreadInfo &threadEpocheInfo) const;

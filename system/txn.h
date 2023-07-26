@@ -90,9 +90,8 @@ public:
 
 	// For VLL
 	TxnType 		vll_txn_type;
-	itemid_t *		index_read(INDEX * index, idx_key_t key, int part_id);
-	void 			index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item);
-	std::vector<itemid_t *> index_read(index_bwtree * index, idx_key_t key, int part_id);
+	std::vector<itemid_t *>		index_read(INDEX * index, idx_key_t key, int part_id);
+	void 			index_read(INDEX * index, idx_key_t key, int part_id, std::vector<itemid_t *>& items);
 	row_t * 		get_row(row_t * row, access_t type);
 protected:	
 	void 			insert_row(row_t * row, table_t * table);
