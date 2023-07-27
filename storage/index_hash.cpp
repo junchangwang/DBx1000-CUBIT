@@ -38,7 +38,7 @@ int IndexHash::index_size()
 					// 	size += sizeof(*item);
 					// 	item = item->next;
 					// }
-					for (auto item : cur_node->items) {
+					for (auto item : *cur_node->items) {
 						item_cnt++;
 						size += sizeof(*item);
 					}
@@ -178,7 +178,8 @@ void BucketHeader::insert_item(idx_key_t key,
 		BucketNode * new_node = (BucketNode *) 
 			mem_allocator.alloc(sizeof(BucketNode), part_id );
 		new_node->init(key);
-		new_node->items.push_back(item);
+		auto vec = new std::vector<itemid_t *>{item};
+		new_node->items = vec;
 		if (prev_node != NULL)
 		{
 			new_node->next = prev_node->next;
@@ -209,11 +210,11 @@ void BucketHeader::insert_item(idx_key_t key,
 		// 		item->next = current;
 		// 	}
 		// }
-		auto it = std::lower_bound(cur_node->items.begin(), cur_node->items.end(), item,
+		auto it = std::lower_bound(cur_node->items->begin(), cur_node->items->end(), item,
 								   [](itemid_t *x, itemid_t *y) {
 									   return x->primary_key < y->primary_key;
 								   });
-		cur_node->items.insert(it, item);
+		cur_node->items->insert(it, item);
 #else
 		// item->next = cur_node->items;
 		// cur_node->items = item;
@@ -232,7 +233,7 @@ void BucketHeader::read_items(idx_key_t key, std::vector<itemid_t *> &items, con
 	}
 	// M_ASSERT(cur_node->key == key, "Key does not exist!");
 
-	items = cur_node->items;
+	items = *cur_node->items;
 }
 
 bool BucketHeader::exist_item(idx_key_t key) 

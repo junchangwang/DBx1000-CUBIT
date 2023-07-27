@@ -445,12 +445,12 @@ namespace ART_OLC {
                 if (key == k) {
                     N *target = N::getChild(k[level], node);
                     TID target_tid = N::getLeaf(target);
-                    auto items = *reinterpret_cast<std::vector<itemid_t *> *>(target_tid);
-                    auto it = std::lower_bound(items.begin(), items.end(), (itemid_t *)tid,
+                    auto items = reinterpret_cast<std::vector<itemid_t *> *>(target_tid);
+                    auto it = std::lower_bound(items->begin(), items->end(), (itemid_t *)tid,
                                             [](itemid_t *x, itemid_t *y) {
                                                 return x->primary_key < y->primary_key;
                                             });
-                    items.insert(it, (itemid_t *)tid);
+                    items->insert(it, (itemid_t *)tid);
 
                         // upsert
                         // N::change(node, k[level], N::setLeaf(tid));

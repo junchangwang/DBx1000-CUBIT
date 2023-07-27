@@ -20,7 +20,7 @@ public:
 	BucketNode * 	next;	
 	// NOTE. The items can be a list of items connected by the next pointer. 
 	//itemid_t * 		items;
-	std::vector<itemid_t *> items;
+	std::vector<itemid_t *>* items;
 };
 
 // BucketHeader does concurrency control of Hash

@@ -79,8 +79,8 @@ bool index_art::index_exist(idx_key_t key, int part_id) {
     Key k;
     k.setInt(key);
     TID tid = root->lookup(k, thread_info);
+    if (tid == 0) return false;
     auto items = reinterpret_cast<std::vector<itemid_t *> *>(tid);
-
     return items->size() > 0;
 }
 
