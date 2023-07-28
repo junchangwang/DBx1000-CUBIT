@@ -14,7 +14,7 @@ ROOT_PATH = os.getcwd()
 
 ossystem = os.system
 
-core_number = [1, 2, 4, 8, 16, 24, 32]
+core_number = [1, 2, 4, 8]
 
 ###################################### cmd #########################################
 
@@ -199,7 +199,7 @@ def  run_indexAndTuples():
     f = open('dat_DBx/index_time.dat', 'w')
     ret = [[]]
     ret.clear()
-    use_number = [1, 4, 16, 32]
+    use_number = [1, 2, 4, 8]
     for num in use_number:
         ret.append(index_time_analysis('dat_tmp_DBx/core_{}.dat'.format(num)))
 

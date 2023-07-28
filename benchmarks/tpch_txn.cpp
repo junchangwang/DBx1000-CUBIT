@@ -262,9 +262,9 @@ RC tpch_txn_man::run_Q6_hash(int tid, tpch_query * query, IndexHash *index)
 
 	cout << "********Q6 with Hash  revenue is : " << revenue << "  . Number of items: " << cnt << endl;
 	string tmp = "Hash " + to_string(item_list.size()) + ":" + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
-	string tmp2 = "Hash(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
+	// string tmp2 = "Hash(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
 	output_info[tid].push_back(tmp);
-	output_info[tid].push_back(tmp2);
+	// output_info[tid].push_back(tmp2);
 
 	assert(rc == RCOK);
 	return finish(rc);
@@ -362,9 +362,9 @@ RC tpch_txn_man::run_Q6_btree(int tid, tpch_query * query, index_btree *index)
 
 	cout << "********Q6 with BTree revenue is : " << revenue << "  . Number of items: " << cnt << endl;
 	string tmp = "BTree " + to_string(item_list.size()) + ":" + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
-	string tmp2 = "BTree(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
+	// string tmp2 = "BTree(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
 	output_info[tid].push_back(tmp);
-	output_info[tid].push_back(tmp2);
+	// output_info[tid].push_back(tmp2);
 
 	assert(rc == RCOK);
 	return finish(rc);
@@ -460,9 +460,9 @@ RC tpch_txn_man::run_Q6_bwtree(int tid, tpch_query *query, index_bwtree *index) 
 
 	cout << "********Q6 with BWTree revenue is : " << revenue << "  . Number of items: " << cnt << endl;;
     string tmp = "BWTree " + to_string(item_list.size()) + ":" + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
-	string tmp2 = "BWTree(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
+	// string tmp2 = "BWTree(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
     output_info[tid].push_back(tmp);
-    output_info[tid].push_back(tmp2);
+    // output_info[tid].push_back(tmp2);
 
     assert(rc == RCOK);
     return finish(rc);
@@ -561,9 +561,9 @@ RC tpch_txn_man::run_Q6_art(int tid, tpch_query * query, index_art *index)
 
 	cout << "********Q6 with ART revenue is : " << revenue << "  . Number of items: " << cnt << endl;
 	string tmp = "ART " + to_string(item_list.size()) + ":" + to_string(cnt) + " " + to_string(index_us+tuple_us) + "  " + to_string(index_us) + "  " + to_string(tuple_us) + "\n";
-	string tmp2 = "ART(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
+	// string tmp2 = "ART(new) " + to_string(item_list.size()) + ":" + to_string(total_us) + " " + to_string(index_read_us) + " " + to_string(leaf_read_us) + " " + to_string(tuple_us) + "\n";
 	output_info[tid].push_back(tmp);
-	output_info[tid].push_back(tmp2);
+	// output_info[tid].push_back(tmp2);
 
 	assert(rc == RCOK);
 	return finish(rc);
