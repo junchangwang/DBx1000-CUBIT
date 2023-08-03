@@ -13,6 +13,11 @@
 #include "nbub/table_lf.h"
 #include "nbub/table_lk.h"
 
+#include <algorithm>
+#include <thread>
+
+#define TPCH_Q6_SCAN_THREADS 4
+
 class table_t;
 class INDEX;
 class tpch_query;
