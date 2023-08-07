@@ -5,6 +5,7 @@
 #include "global.h"
 #include "helper.h"
 #include "index_base.h"
+#include <algorithm>
 
 
 typedef struct bt_node {

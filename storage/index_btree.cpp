@@ -1,6 +1,8 @@
+#include "helper.h"
 #include "mem_alloc.h"
 #include "index_btree.h"
 #include "row.h"
+#include <vector>
 
 RC index_btree::init(uint64_t part_cnt) {
 	this->part_cnt = part_cnt;
@@ -56,11 +58,16 @@ int index_btree::index_size() {
 			assert( c->is_leaf == true);
 			for (int i = 0; i < c->num_keys; i++) {
 				// cout << "key = " << c->keys[i] << endl;
-				item = (itemid_t*)c->pointers[i];
-				while (item != NULL) {
-					item_cnt ++;
+				// item = (itemid_t*)c->pointers[i];
+				// while (item != NULL) {
+				// 	item_cnt ++;
+				// 	size += sizeof(*item);
+				// 	item = item->next;
+				// }
+                auto items = *(std::vector<itemid_t *> *)c->pointers[i];
+                for (auto *item : items) {
+	                item_cnt++;
 					size += sizeof(*item);
-					item = item->next;
 				}
 			}
 			c = c->next;
@@ -171,7 +178,8 @@ RC index_btree::index_next(uint64_t thd_id, itemid_t * &item, bool samekey) {
 		if ( samekey && leaf->keys[ *cur_idx_per_thd[thd_id] ] != cur_key)
 			item = NULL;
 		else 
-			item = (itemid_t *) leaf->pointers[ *cur_idx_per_thd[thd_id] ];
+			//item = (itemid_t *) leaf->pointers[ *cur_idx_per_thd[thd_id] ];
+			item = ((std::vector<itemid_t *> *)leaf->pointers)->at(*cur_idx_per_thd[thd_id]);
 	}
 	return RCOK;
 }
@@ -196,11 +204,12 @@ RC index_btree::index_read(idx_key_t key, std::vector<itemid_t *>& items, int pa
 		M_ASSERT(false, "the leaf does not exist!");
 	for (UInt32 i = 0; i < leaf->num_keys; i++) 
 		if (leaf->keys[i] == key) {
-			auto item = (itemid_t *)leaf->pointers[i];
-			while (item != NULL) {
-				items.push_back(item);
-				item = item->next;
-			}
+			// auto item = (itemid_t *)leaf->pointers[i];
+			// while (item != NULL) {
+			// 	items.push_back(item);
+			// 	item = item->next;
+			// }
+			items = *(std::vector<itemid_t *> *)leaf->pointers[i];
 
 			release_latch(leaf);
 			(*cur_leaf_per_thd[thd_id]) = leaf;
@@ -285,6 +294,9 @@ RC index_btree::make_node(uint64_t part_id, bt_node *& node) {
 	new_node->pointers = NULL;
 	new_node->keys = (idx_key_t *) mem_allocator.alloc((order - 1) * sizeof(idx_key_t), part_id);
 	new_node->pointers = (void **) mem_allocator.alloc(order * sizeof(void *), part_id);
+    for (int i = 0; i < order; i++) {
+		new_node->pointers[i] = NULL;
+	}
 	assert (new_node->keys != NULL && new_node->pointers != NULL);
 	new_node->is_leaf = false;
 	new_node->num_keys = 0;
@@ -306,7 +318,8 @@ RC index_btree::start_new_tree(glob_param params, idx_key_t key, itemid_t * item
 	bt_node * root = roots[part_id % part_cnt];
 	assert(root != NULL);
 	root->keys[0] = key;
-	root->pointers[0] = (void *)item;
+	auto *vec = new std::vector<itemid_t *>{item};
+	root->pointers[0] = (void *)vec;
 	root->parent = NULL;
 	root->num_keys++;
 	return RCOK;
@@ -489,8 +502,14 @@ RC index_btree::insert_into_leaf(glob_param params, bt_node * leaf, idx_key_t ke
 	insertion_point = 0;
 	int idx = leaf_has_key(leaf, key);	
 	if (idx >= 0) {
-		item->next = (itemid_t *)leaf->pointers[idx];
-		leaf->pointers[idx] = (void *) item;
+		// item->next = (itemid_t *)leaf->pointers[idx];
+		// leaf->pointers[idx] = (void *) item;
+        auto items = reinterpret_cast<std::vector<itemid_t *> *>( leaf->pointers[idx]);
+        auto it = std::lower_bound(items->begin(), items->end(), item,
+                                            [](itemid_t *x, itemid_t *y) {
+                                                return x->primary_key < y->primary_key;
+                                            });
+        items->insert(it, item);
 		return RCOK;
 	}
 	while (insertion_point < leaf->num_keys && leaf->keys[insertion_point] < key)
@@ -500,7 +519,8 @@ RC index_btree::insert_into_leaf(glob_param params, bt_node * leaf, idx_key_t ke
 		leaf->pointers[i] = leaf->pointers[i - 1];
 	}
 	leaf->keys[insertion_point] = key;
-	leaf->pointers[insertion_point] = (void *)item;
+	auto vec = new std::vector<itemid_t *>{item};
+	leaf->pointers[insertion_point] = (void *)vec;
 	leaf->num_keys++;
 	M_ASSERT( (leaf->num_keys < order), "too many keys in leaf" );
 	return RCOK;
@@ -522,7 +542,8 @@ RC index_btree::split_lf_insert(glob_param params, bt_node * leaf, idx_key_t key
 	M_ASSERT(leaf->num_keys == order - 1, "trying to split non-full leaf!");
 
 	idx_key_t temp_keys[BTREE_ORDER];
-	itemid_t * temp_pointers[BTREE_ORDER];
+	//itemid_t * temp_pointers[BTREE_ORDER];
+	std::vector<itemid_t *>* temp_pointers[BTREE_ORDER];
 	insertion_index = 0;
 	while (insertion_index < order - 1 && leaf->keys[insertion_index] < key)
 		insertion_index++;
@@ -532,12 +553,13 @@ RC index_btree::split_lf_insert(glob_param params, bt_node * leaf, idx_key_t key
 //		new_leaf->keys[j] = leaf->keys[i];
 //		new_leaf->pointers[j] = (itemid_t *)leaf->pointers[i];
 		temp_keys[j] = leaf->keys[i];
-		temp_pointers[j] = (itemid_t *)leaf->pointers[i];
+		temp_pointers[j] = (std::vector<itemid_t *> *)leaf->pointers[i];
 	}
 //	new_leaf->keys[insertion_index] = key;
 //	new_leaf->pointers[insertion_index] = item;
 	temp_keys[insertion_index] = key;
-	temp_pointers[insertion_index] = item;
+	auto vec = new std::vector<itemid_t *>{item};
+	temp_pointers[insertion_index] = vec;
 	
    	// leaf is on the left of new_leaf
 	split = cut(order - 1);
@@ -545,7 +567,7 @@ RC index_btree::split_lf_insert(glob_param params, bt_node * leaf, idx_key_t key
 	for (i = 0; i < split; i++) {
 //		leaf->pointers[i] = new_leaf->pointers[i];
 //		leaf->keys[i] = new_leaf->keys[i];
-		leaf->pointers[i] = temp_pointers[i];
+		leaf->pointers[i] = (void *)temp_pointers[i];
 		leaf->keys[i] = temp_keys[i];
 		leaf->num_keys++;
 		M_ASSERT( (leaf->num_keys < order), "too many keys in leaf" );
@@ -553,7 +575,7 @@ RC index_btree::split_lf_insert(glob_param params, bt_node * leaf, idx_key_t key
 	for (i = split, j = 0; i < order; i++, j++) {
 //		new_leaf->pointers[j] = new_leaf->pointers[i];
 //		new_leaf->keys[j] = new_leaf->keys[i];
-		new_leaf->pointers[j] = temp_pointers[i];
+		new_leaf->pointers[j] = (void *)temp_pointers[i];
 		new_leaf->keys[j] = temp_keys[i];
 		new_leaf->num_keys++;
 		M_ASSERT( (leaf->num_keys < order), "too many keys in leaf" );
