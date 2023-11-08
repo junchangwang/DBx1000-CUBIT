@@ -1,0 +1,15 @@
+*.o
+*.d
+rundb
+.vscode/
+CUBIT-PDS/
+build/
+cscope.*
+output
+graphs_*
+dat_*
+bm_*
+perf.output.*
+perf.data*
+.idea/
+

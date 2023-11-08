@@ -1,0 +1,20 @@
+### About this project
+
+DBx1000 is an academic OLTP DBMS to evaluate the scalability of different layers of DB systems. The original readme file can be found at README-DBx1000.md.
+
+We extend DBx1000 to support OLAP and use it as an application of CUBIT. Besides, we add the following features:
+- TPC-H (benchmarks/tpch)
+- Bw-Tree (storage/index_bwtree)
+- ART (storage/index_art)
+
+Note that we borrowed the Bw-Tree and ART implementation from the Open Bw-Tree project(https://github.com/wangziqi2016/index-microbench) and integrated them into the DBx1000 project.
+
+### How to compile
+- Retrieve the source code of CUBIT from https://github.com/junchangwang/CUBIT
+- Compile CUBIT by using the command "cd CUBIT && ./build.sh"
+- Build the DBx1000-CUBIT project by using the command "make"
+
+### How to execute
+- ./python3 run_sz_DBx.py
+- ./gen_graphs_DBx.sh
+
