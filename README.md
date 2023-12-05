@@ -2,7 +2,7 @@
 
 DBx1000 is an academic OLTP DBMS to evaluate the scalability of different layers of DB systems. The original readme file can be found at README-DBx1000.md.
 
-We extend DBx1000 to support OLAP and use it as an application of CUBIT. Besides, we add the following features:
+We integrate CUBIT into DBx1000 and add the following features:
 - TPC-H (benchmarks/tpch)
 - Bw-Tree (storage/index_bwtree)
 - ART (storage/index_art)
