@@ -12,4 +12,5 @@ bm_*
 perf.output.*
 perf.data*
 .idea/
+CUBIT/
 
