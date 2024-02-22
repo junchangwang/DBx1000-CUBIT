@@ -4,6 +4,7 @@
 #include "global.h"
 #include "helper.h"
 #include "query.h"
+#include <cstdint>
 
 class workload;
 
@@ -19,13 +20,13 @@ public:
 	void init(uint64_t thd_id, workload * h_wl);
 	TPCCTxnType type;
 	/**********************************************/	
-	// common txn input for both payment & new-order
+	// common txn input for both payment & new-order & stock-level
 	/**********************************************/	
 	uint64_t w_id;
 	uint64_t d_id;
 	uint64_t c_id;
 	/**********************************************/	
-	// txn input for payment
+	// txn input for payment & stock_level
 	/**********************************************/	
 	uint64_t d_w_id;
 	uint64_t c_w_id;
@@ -46,6 +47,10 @@ public:
 	uint64_t ol_delivery_d;
 	// for order-status
 
+	/**********************************************/	
+	// txn input for stock-level
+	/**********************************************/
+	uint64_t threshold_stock;
 
 private:
 	// warehouse id to partition id mapping
@@ -53,6 +58,7 @@ private:
 	void gen_payment(uint64_t thd_id);
 	void gen_new_order(uint64_t thd_id);
 	void gen_order_status(uint64_t thd_id);
+	void gen_stock_level(uint64_t thd_id);
 };
 
 #endif

@@ -18,7 +18,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD 					TPCH
+#define WORKLOAD 					TPCC
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -41,7 +41,7 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-#define CC_ALG 						HEKATON
+#define CC_ALG 						MVCC
 #define ISOLATION_LEVEL 			SNAPSHOT
 #define CORE_CNT					4
 

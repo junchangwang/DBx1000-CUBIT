@@ -12,6 +12,7 @@
 #include "naive/table.h"
 #include "nbub/table_lf.h"
 #include "nbub/table_lk.h"
+#include <cstdint>
 
 class table_t;
 class INDEX;
@@ -22,6 +23,8 @@ public:
 	RC init();
 	RC init_table();
 	RC init_bitmap_c_w_id();
+	RC init_bitmap_s_quantity();
+	RC init_bitmap_s_w_id();
 	RC init_schema(const char * schema_file);
 	RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd);
 	table_t * 		t_warehouse;
@@ -46,6 +49,8 @@ public:
 	INDEX * 	i_orderline_wd; // key = (w_id, d_id). 
 
 	BaseTable *bitmap_c_w_id;
+	BaseTable *bitmap_s_quantity;
+	BaseTable *bitmap_s_w_id;
 	
 	bool ** delivering;
 	uint32_t next_tid;

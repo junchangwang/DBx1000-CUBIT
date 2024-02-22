@@ -12,11 +12,15 @@
 #include "txn.h"
 #include "mem_alloc.h"
 #include "tpcc_const.h"
+#include <cstdint>
+#include <cstdio>
 
 RC tpcc_wl::init() 
 {
 #if TPCC_EVA_CUBIT
 	init_bitmap_c_w_id();
+	// init_bitmap_s_quantity();
+	// init_bitmap_s_w_id();
 #endif
 	workload::init();
 	string path = "./benchmarks/";
@@ -82,6 +86,66 @@ RC tpcc_wl::init_bitmap_c_w_id( )
 	return RCOK;
 }
 
+RC tpcc_wl::init_bitmap_s_quantity()
+{
+	// quantity random over [10..100], threshold random within [10..20]
+	// 
+	Table_config *config = new Table_config{};
+	config->n_workers = g_thread_cnt;
+	config->DATA_PATH = "";
+	config->INDEX_PATH = "";
+	config->g_cardinality = 11;
+	enable_fence_pointer = config->enable_fence_pointer = true;
+	INDEX_WORDS = 10000;  // Fence length 
+	config->approach = {"nbub-lk"};
+	config->nThreads_for_getval = 4;
+	config->show_memory = true;
+	config->on_disk = false;
+	config->showEB = false;
+    config->decode = false;
+	config->encoding = RE;
+	config->autoCommit = true;
+	config->db_control = true;
+	config->n_merge_threshold = 20;
+
+	// DBx1000 doesn't use the following parameters;
+	// they are used by nicolas.
+	config->n_rows = 0; 
+	config->n_queries = 900;
+	config->n_udis = 100;
+	config->verbose = false;
+	config->time_out = 100;
+	
+	bitmap_s_quantity = new nbub_lk::NbubLK(config);
+}
+
+RC tpcc_wl::init_bitmap_s_w_id()
+{
+	Table_config *config = new Table_config{};
+	config->n_workers = g_thread_cnt;
+	config->DATA_PATH = "";
+	config->INDEX_PATH = "";
+	config->g_cardinality = g_num_wh * DIST_PER_WARE;
+	enable_fence_pointer = config->enable_fence_pointer = true;
+	INDEX_WORDS = 10000;  // Fence length 
+	config->approach = {"nbub-lk"};
+	config->nThreads_for_getval = 4;
+	config->show_memory = true;
+	config->on_disk = false;
+	config->showEB = false;
+    config->decode = false;
+	config->encoding = EE;
+
+	// DBx1000 doesn't use the following parameters;
+	// they are used by nicolas.
+	config->n_rows = 0; 
+	config->n_queries = 900;
+	config->n_udis = 100;
+	config->verbose = false;
+	config->time_out = 100;
+	
+	bitmap_s_w_id = new nbub_lk::NbubLK(config);
+}
 RC tpcc_wl::init_schema(const char * schema_file) {
 	workload::init_schema(schema_file);
 	t_warehouse = tables["WAREHOUSE"];
@@ -101,6 +165,7 @@ RC tpcc_wl::init_schema(const char * schema_file) {
 	i_customer_id = indexes["CUSTOMER_ID_IDX"];
 	i_customers = indexes["CUSTOMERS_IDX"];
 	i_stock = indexes["STOCK_IDX"];
+	i_orderline = indexes["ORDERLINE_IDX"];
 	return RCOK;
 }
 
@@ -196,6 +261,7 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 }
 
 void tpcc_wl::init_tab_dist(uint64_t wid) {
+	int64_t next_o_id = 3001;
 	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
 		row_t * row;
 		uint64_t row_id;
@@ -224,7 +290,7 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
     	double w_ytd=30000.00;
 		row->set_value(D_TAX, tax);
 		row->set_value(D_YTD, w_ytd);
-		row->set_value(D_NEXT_O_ID, 3001);
+		row->set_value(D_NEXT_O_ID, next_o_id);
 		
 		index_insert(i_district, distKey(did, wid), row, wh_to_part(wid));
 	}
@@ -412,6 +478,8 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
 			char ol_dist_info[24];
 	        MakeAlphaString(24, 24, ol_dist_info, wid-1);
 			row->set_value(OL_DIST_INFO, ol_dist_info);
+			//printf("insert with key = %d\n", orderlineKey(wid, did, oid));
+			index_insert(i_orderline, orderlineKey(wid, did, oid), row);
 		}
 #endif
 		// NEW ORDER

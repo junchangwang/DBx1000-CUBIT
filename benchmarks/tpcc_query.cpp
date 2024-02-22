@@ -1,3 +1,5 @@
+#include "config.h"
+#include "global.h"
 #include "query.h"
 #include "tpcc_query.h"
 #include "tpcc.h"
@@ -7,13 +9,14 @@
 #include "table.h"
 
 void tpcc_query::init(uint64_t thd_id, workload * h_wl) {
-	double x = (double)(rand() % 100) / 100.0;
-	part_to_access = (uint64_t *) 
-		mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
-	if (x < g_perc_payment)
-		gen_payment(thd_id);
-	else 
-		gen_new_order(thd_id);
+	// double x = (double)(rand() % 100) / 100.0;
+	// part_to_access = (uint64_t *) 
+	// 	mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
+	// if (x < g_perc_payment)
+	// 	gen_payment(thd_id);
+	// else 
+	// 	gen_new_order(thd_id);
+	gen_stock_level(thd_id);
 }
 
 void tpcc_query::gen_payment(uint64_t thd_id) {
@@ -132,4 +135,16 @@ tpcc_query::gen_order_status(uint64_t thd_id) {
 		by_last_name = false;
 		c_id = NURand(1023, 1, g_cust_per_dist, w_id-1);
 	}
+}
+
+void
+tpcc_query::gen_stock_level(uint64_t thd_id) {
+	type = TPCC_STOCK_LEVEL;
+	threshold_stock = URand(10, 20, thd_id);
+	if (FIRST_PART_LOCAL)
+		w_id = thd_id % g_num_wh + 1;
+	else 
+		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
+	d_id = URand(1, DIST_PER_WARE, w_id-1);
+	d_w_id = d_id;
 }

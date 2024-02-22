@@ -1,3 +1,5 @@
+#include "global.h"
+#include "helper.h"
 #include "tpcc.h"
 #include "tpcc_query.h"
 #include "tpc_helper.h"
@@ -9,6 +11,10 @@
 #include "index_hash.h"
 #include "index_btree.h"
 #include "tpcc_const.h"
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <vector>
 
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -28,9 +34,9 @@ RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 /*		case TPCC_ORDER_STATUS :
 			return run_order_status(m_query); break;
 		case TPCC_DELIVERY :
-			return run_delivery(m_query); break;
+			return run_delivery(m_query); break;*/
 		case TPCC_STOCK_LEVEL :
-			return run_stock_level(m_query); break;*/
+			return run_stock_level(m_query); break;
 		default:
 			assert(false);
 	}
@@ -708,5 +714,51 @@ tpcc_txn_man::run_delivery(tpcc_query * query) {
 
 RC 
 tpcc_txn_man::run_stock_level(tpcc_query * query) {
-	return RCOK;
+	RC rc = RCOK;
+	itemid_t * item;
+	uint64_t item_cnt = 0;
+
+	uint64_t w_id = query->w_id;
+	uint64_t d_w_id = query->d_w_id;
+	uint64_t d_id = query->d_id;
+
+	item = index_read(_wl->i_district, distKey(d_id, w_id), wh_to_part(w_id));
+	while (item != NULL) {
+		row_t * r_dist = ((row_t *)item->location);
+		row_t * r_dist_local = get_row(r_dist, RD);
+		if (r_dist_local == NULL) {
+			return finish(Abort);
+		}
+		if (*(int64_t *)r_dist_local->get_value(D_W_ID) == d_w_id) {
+			int64_t next_o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);	
+
+			//std::vector<row_t *> orderline_rows(20);
+			std::set<int64_t> item_ids;
+
+			for (int64_t o_id = (next_o_id-20) > 0 ? (next_o_id-20) : 0; o_id < next_o_id; o_id++) {
+				//printf("read with key = %d\n", orderlineKey(w_id, d_id, o_id));
+				item = index_read(_wl->i_orderline, orderlineKey(w_id, d_id, o_id), wh_to_part(w_id));
+				row_t * r_orderline = (row_t *)item->location;
+				row_t * r_orderline_local = get_row(r_orderline, RD);				
+				int64_t ol_i_id = *(int64_t *)r_orderline_local->get_value(OL_I_ID);
+				
+				if (item_ids.find(ol_i_id) == item_ids.end()) {
+					item_ids.insert(ol_i_id);
+					item = index_read(_wl->i_stock, stockKey(ol_i_id, w_id), wh_to_part(w_id));
+					row_t * r_stock = ((row_t *)item->location);
+					row_t * r_stock_local = get_row(r_stock, RD);
+
+					int64_t s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
+					if (s_quantity < query->threshold_stock) {
+						item_cnt++;
+					}
+				}
+			}
+		}
+		item = item->next;
+	}
+
+	printf("ITEM-COUNT = %d when threshold = %d\n", item_cnt, query->threshold_stock);
+
+	return rc;
 }

@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS= -g -O3 -std=c++17
+CFLAGS= -ggdb -O0 -std=c++17
 
 .SUFFIXES: .o .cpp .h
 
