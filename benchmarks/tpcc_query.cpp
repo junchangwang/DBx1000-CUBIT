@@ -146,5 +146,4 @@ tpcc_query::gen_stock_level(uint64_t thd_id) {
 	else 
 		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
 	d_id = URand(1, DIST_PER_WARE, w_id-1);
-	d_w_id = d_id;
 }
