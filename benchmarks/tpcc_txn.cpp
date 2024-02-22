@@ -760,5 +760,5 @@ tpcc_txn_man::run_stock_level(tpcc_query * query) {
 
 	printf("ITEM-COUNT = %d when threshold = %d\n", item_cnt, query->threshold_stock);
 
-	return rc;
+	return finish(rc);
 }
