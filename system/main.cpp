@@ -139,7 +139,8 @@ int main(int argc, char* argv[])
 #endif
 
 	// spawn and run txns again.
-	int64_t starttime = get_server_clock();
+	//int64_t starttime = get_server_clock();
+	auto start = std::chrono::high_resolution_clock::now();
 	for (uint32_t i = 0; i < thd_cnt - 1; i++) {
 		uint64_t vid = i;
 		pthread_create(&p_thds[i], NULL, f, (void *)vid);
@@ -151,7 +152,9 @@ int main(int argc, char* argv[])
 
 	for (uint32_t i = 0; i < thd_cnt - 1; i++) 
 		pthread_join(p_thds[i], NULL);
-	int64_t endtime = get_server_clock();
+	//int64_t endtime = get_server_clock();
+	auto end = std::chrono::high_resolution_clock::now();
+	long  long time_elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
 
 #if (WORKLOAD == TPCC && TPCC_EVA_CUBIT == true)
 	if ((config->approach == "nbub-lf") || (config->approach == "nbub-lk")) 
@@ -166,7 +169,7 @@ int main(int argc, char* argv[])
 #endif
 	
 	if (WORKLOAD != TEST) {
-		printf("PASS! SimTime = %ld\n", endtime - starttime);
+		printf("PASS! SimTime = %ld(ms)\n", time_elapsed_us);
 		if (STATS_ENABLE)
 			stats.print();
 	} else {
