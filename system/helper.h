@@ -152,6 +152,7 @@ public:
 	itemid_t * next;
 	bool valid;
 	uint64_t primary_key;
+	int64_t item_id;
 	void init();
 	bool operator==(const itemid_t &other) const;
 	bool operator!=(const itemid_t &other) const;

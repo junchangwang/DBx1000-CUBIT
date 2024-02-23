@@ -21,7 +21,7 @@ thread_t ** m_thds;
 
 // defined in parser.cpp
 void parser(int argc, char * argv[]);
-int verify_bitmap(workload * m_wl);
+//int verify_bitmap(workload * m_wl);
 
 int main(int argc, char* argv[])
 {
@@ -146,8 +146,8 @@ int main(int argc, char* argv[])
 	}
 	f((void *)(thd_cnt - 1));
 
-	if (WORKLOAD == TPCC && TPCC_EVA_CUBIT == true)
-		assert(!verify_bitmap(m_wl));
+	// if (WORKLOAD == TPCC && TPCC_EVA_CUBIT == true)
+	// 	assert(!verify_bitmap(m_wl));
 
 	for (uint32_t i = 0; i < thd_cnt - 1; i++) 
 		pthread_join(p_thds[i], NULL);
@@ -181,59 +181,59 @@ void * f(void * id) {
 	return NULL;
 }
 
-int verify_bitmap(workload * m_wl) 
-{
-	rcu_register_thread();
+// int verify_bitmap(workload * m_wl) 
+// {
+// 	rcu_register_thread();
 
-	tpcc_wl *wl = dynamic_cast<tpcc_wl *>(m_wl);
+// 	tpcc_wl *wl = dynamic_cast<tpcc_wl *>(m_wl);
 
-	if (wl->bitmap_c_w_id->config->approach == "naive") {
-		int ROW_ID = g_cust_per_dist;
-		naive::Table *bitmap = dynamic_cast<naive::Table*>(wl->bitmap_c_w_id);
-		assert(bitmap->get_value(ROW_ID-1) == bitmap->get_value(0));
-		int old_val = bitmap->get_value(ROW_ID);
-		int to_val = old_val + 1;
+// 	if (wl->bitmap_c_w_id->config->approach == "naive") {
+// 		int ROW_ID = g_cust_per_dist;
+// 		naive::Table *bitmap = dynamic_cast<naive::Table*>(wl->bitmap_c_w_id);
+// 		assert(bitmap->get_value(ROW_ID-1) == bitmap->get_value(0));
+// 		int old_val = bitmap->get_value(ROW_ID);
+// 		int to_val = old_val + 1;
 
-		assert(bitmap->bitmaps[old_val]->getBit(ROW_ID, bitmap->config) == 1);
-		bitmap->update(0, ROW_ID, to_val);
-		assert(bitmap->bitmaps[old_val]->getBit(ROW_ID, bitmap->config) == 0);
-		assert(bitmap->bitmaps[to_val]->getBit(ROW_ID, bitmap->config) == 1);
-	} 
-	else if (wl->bitmap_c_w_id->config->approach == "nbub-lk") {
-		RUB last_rub = RUB{0, TYPE_INV, {}};
-		int ROW_ID = 6;
-		nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub*>(wl->bitmap_c_w_id);
-		assert(bitmap->get_value_rcu(ROW_ID-1, bitmap->g_timestamp, last_rub) == 
-					bitmap->get_value_rcu(0, bitmap->g_timestamp, last_rub));
-		int old_val = bitmap->get_value_rcu(ROW_ID, bitmap->g_timestamp, last_rub);
-		int to_val = old_val + 1;
+// 		assert(bitmap->bitmaps[old_val]->getBit(ROW_ID, bitmap->config) == 1);
+// 		bitmap->update(0, ROW_ID, to_val);
+// 		assert(bitmap->bitmaps[old_val]->getBit(ROW_ID, bitmap->config) == 0);
+// 		assert(bitmap->bitmaps[to_val]->getBit(ROW_ID, bitmap->config) == 1);
+// 	} 
+// 	else if (wl->bitmap_c_w_id->config->approach == "nbub-lk") {
+// 		RUB last_rub = RUB{0, TYPE_INV, {}};
+// 		int ROW_ID = 6;
+// 		nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub*>(wl->bitmap_c_w_id);
+// 		assert(bitmap->get_value_rcu(ROW_ID-1, bitmap->g_timestamp, last_rub) == 
+// 					bitmap->get_value_rcu(0, bitmap->g_timestamp, last_rub));
+// 		int old_val = bitmap->get_value_rcu(ROW_ID, bitmap->g_timestamp, last_rub);
+// 		int to_val = old_val + 1;
 
-		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 1);
-		bitmap->update(0, ROW_ID, to_val);
-		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 1);
+// 		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 1);
+// 		bitmap->update(0, ROW_ID, to_val);
+// 		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 1);
 
-		assert(bitmap->get_value_rcu(/*rowid*/ ROW_ID, bitmap->g_timestamp-1, last_rub) == old_val);
-		assert(bitmap->get_value_rcu(/*rowid*/ ROW_ID, bitmap->g_timestamp, last_rub) == to_val);
+// 		assert(bitmap->get_value_rcu(/*rowid*/ ROW_ID, bitmap->g_timestamp-1, last_rub) == old_val);
+// 		assert(bitmap->get_value_rcu(/*rowid*/ ROW_ID, bitmap->g_timestamp, last_rub) == to_val);
 
-		// FIXME: after enable merge()
-		// MERGE_THRESH = 1;  // Make sure MERGE_THRESH = 1;
-		bitmap->evaluate(0, old_val);
-		bitmap->evaluate(0, to_val);
-		this_thread::sleep_for(1ms);
-		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 0);
-		assert(bitmap->bitmaps[to_val]->btv->getBit(ROW_ID, bitmap->config) == 0);
-		this_thread::sleep_for(1ms);
-		bitmap->evaluate(0, old_val);
-		bitmap->evaluate(0, to_val); 
-		this_thread::sleep_for(1ms);
-		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 0);
-		assert(bitmap->bitmaps[to_val]->btv->getBit(ROW_ID, bitmap->config) == 1);
+// 		// FIXME: after enable merge()
+// 		// MERGE_THRESH = 1;  // Make sure MERGE_THRESH = 1;
+// 		bitmap->evaluate(0, old_val);
+// 		bitmap->evaluate(0, to_val);
+// 		this_thread::sleep_for(1ms);
+// 		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 0);
+// 		assert(bitmap->bitmaps[to_val]->btv->getBit(ROW_ID, bitmap->config) == 0);
+// 		this_thread::sleep_for(1ms);
+// 		bitmap->evaluate(0, old_val);
+// 		bitmap->evaluate(0, to_val); 
+// 		this_thread::sleep_for(1ms);
+// 		assert(bitmap->bitmaps[old_val]->btv->getBit(ROW_ID, bitmap->config) == 0);
+// 		assert(bitmap->bitmaps[to_val]->btv->getBit(ROW_ID, bitmap->config) == 1);
 
-		cout << "[CUBIT]: verify_bitmap by moving row " << ROW_ID
-		<< " from " << old_val << " to " << to_val << endl;
-	}
+// 		cout << "[CUBIT]: verify_bitmap by moving row " << ROW_ID
+// 		<< " from " << old_val << " to " << to_val << endl;
+// 	}
 
-	rcu_unregister_thread();
+// 	rcu_unregister_thread();
 
-	return 0;		
-}
+// 	return 0;		
+// }

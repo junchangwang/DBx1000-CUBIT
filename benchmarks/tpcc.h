@@ -48,9 +48,10 @@ public:
 	INDEX * 	i_orderline; // key = (w_id, d_id, o_id)
 	INDEX * 	i_orderline_wd; // key = (w_id, d_id). 
 
-	BaseTable *bitmap_c_w_id;
+	// BaseTable *bitmap_c_w_id;
 	BaseTable *bitmap_s_quantity;
-	BaseTable *bitmap_s_w_id;
+	Table_config *bitmap_config;
+	// BaseTable *bitmap_s_w_id;
 	
 	bool ** delivering;
 	uint32_t next_tid;
@@ -89,6 +90,7 @@ private:
 	RC run_order_status(tpcc_query * query);
 	RC run_delivery(tpcc_query * query);
 	RC run_stock_level(tpcc_query * query);
+	RC run_stock_level_bt(tpcc_query * query);
 	RC evaluate_index(tpcc_query *query);
 };
 

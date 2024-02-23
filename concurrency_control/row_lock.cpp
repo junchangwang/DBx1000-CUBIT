@@ -230,7 +230,7 @@ RC Row_lock::lock_release(txn_man * txn) {
 bool Row_lock::conflict_lock(lock_t l1, lock_t l2) {
 	if (l1 == LOCK_NONE || l2 == LOCK_NONE)
 		return false;
-    else if (l1 == LOCK_EX || l2 == LOCK_EX)
+    else if (l1 == LOCK_EXC || l2 == LOCK_EXC)
         return true;
 	else
 		return false;

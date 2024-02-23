@@ -132,6 +132,20 @@ void workload::index_insert(INDEX * index, uint64_t key, row_t * row, int64_t pa
     assert( index->index_insert(key, m_item, pid) == RCOK );
 }
 
+void workload::index_insert_orderline(INDEX * index, uint64_t key,  row_t * row, uint64_t item_id, int64_t part_id) {
+	uint64_t pid = part_id;
+	if (part_id == -1)
+		pid = get_part_id(row);
+	itemid_t * m_item = (itemid_t *) mem_allocator.alloc(sizeof(itemid_t), pid);
+	m_item->init();
+	m_item->type = DT_row;
+	m_item->location = row;
+	m_item->valid = true;
+	m_item->item_id = item_id;
+
+    assert( index->index_insert(key, m_item, pid) == RCOK );
+}
+
 void workload::index_insert_with_primary_key(string index_name, uint64_t key, uint64_t primary_key, row_t * row) {
 	assert(false);
 	INDEX * index = (INDEX *) indexes[index_name];
