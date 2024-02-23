@@ -9,14 +9,15 @@
 #include "table.h"
 
 void tpcc_query::init(uint64_t thd_id, workload * h_wl) {
-	// double x = (double)(rand() % 100) / 100.0;
-	// part_to_access = (uint64_t *) 
-	// 	mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
-	// if (x < g_perc_payment)
-	// 	gen_payment(thd_id);
-	// else 
-	// 	gen_new_order(thd_id);
-	gen_stock_level(thd_id);
+	double x = (double)(rand() % 100) / 100.0;
+	part_to_access = (uint64_t *) 
+		mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
+	if (x < g_perc_payment)
+		gen_payment(thd_id);
+	else if (x >= g_perc_payment && x < g_perc_payment + g_perc_neworder)
+		gen_new_order(thd_id);
+	else 
+		gen_stock_level(thd_id);
 }
 
 void tpcc_query::gen_payment(uint64_t thd_id) {

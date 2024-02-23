@@ -38,7 +38,7 @@ RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 		case TPCC_DELIVERY :
 			return run_delivery(m_query); break;*/
 		case TPCC_STOCK_LEVEL :
-			return run_stock_level(m_query); break;
+			return run_stock_level_bt(m_query); break;
 		default:
 			assert(false);
 	}
@@ -501,6 +501,17 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 			quantity = s_quantity - ol_quantity + 91;
 		}
 		r_stock_local->set_value(S_QUANTITY, &quantity);
+		uint64_t row_id = r_stock_local - _wl->t_stock->row_buffer;
+    	nbub::Nbub* bt_quantity = dynamic_cast<nbub::Nbub *>(_wl->bitmap_s_quantity);
+		if (quantity <= 20) {
+			auto start = (quantity - 10) >= 0 ? (quantity - 10) : 0;
+			for (int i = 0; i <= start; i++) {
+				bt_quantity->bitmaps[i]->btv->setBit(row_id, 1, _wl->bitmap_config);
+			}
+			for (int i = start - 1; i < 11; i++) {
+				bt_quantity->bitmaps[i]->btv->setBit(row_id, 0, _wl->bitmap_config);
+			}
+		}
 
 		/*====================================================+
 		EXEC SQL INSERT
