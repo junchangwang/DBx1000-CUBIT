@@ -94,7 +94,7 @@ RC tpcc_wl::init_bitmap_s_quantity()
 	bitmap_config->n_workers = g_thread_cnt;
 	bitmap_config->DATA_PATH = "";
 	bitmap_config->INDEX_PATH = "";
-	bitmap_config->g_cardinality = 12;
+	bitmap_config->g_cardinality = 11;
 	enable_fence_pointer = bitmap_config->enable_fence_pointer = true;
 	INDEX_WORDS = 1000;  // Fence length 
 	bitmap_config->approach = {"nbub-lk"};
@@ -103,7 +103,7 @@ RC tpcc_wl::init_bitmap_s_quantity()
 	bitmap_config->on_disk = false;
 	bitmap_config->showEB = false;
     bitmap_config->decode = false;
-	bitmap_config->encoding = RE;
+	bitmap_config->encoding = EE;
 	bitmap_config->autoCommit = true;
 	bitmap_config->db_control = true;
 	bitmap_config->n_merge_threshold = 20;
@@ -342,15 +342,17 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 		nbub::Nbub * bitmap = dynamic_cast<nbub::Nbub *>(bitmap_s_quantity);
 
 		int quantity_idx = 0;	
-		if (quantity <= 10) {
+		if (quantity < 10) {
 			quantity_idx = 0;
-			bitmap->__init_append(0, row_id, quantity_idx);
-		} else if (quantity > 10 && quantity <= 20) {
+		} else if ( quantity < 20) {
 			quantity_idx = quantity - 10;
-			for (int i = 0; i < quantity_idx; i++) {
-				bitmap->__init_append(0, row_id, i);
-			}
-		} 
+		} else {
+			quantity_idx = 11;
+		}
+
+		for (int i = quantity_idx; i < 11; i++) {
+			bitmap->__init_append(0, row_id, i);
+		}
 	}
 }
 
