@@ -470,6 +470,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
 		assert(item != NULL);
 		row_t * r_stock = ((row_t *)stock_item->location);
+		uint64_t row_id = r_stock - _wl->t_stock->row_buffer;
 		row_t * r_stock_local = get_row(r_stock, WR);
 		if (r_stock_local == NULL) {
 			return finish(Abort);
@@ -501,17 +502,17 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 			quantity = s_quantity - ol_quantity + 91;
 		}
 		r_stock_local->set_value(S_QUANTITY, &quantity);
-		uint64_t row_id = r_stock_local - _wl->t_stock->row_buffer;
     	nbub::Nbub* bt_quantity = dynamic_cast<nbub::Nbub *>(_wl->bitmap_s_quantity);
-		if (quantity <= 20) {
-			auto start = (quantity - 10) >= 0 ? (quantity - 10) : 0;
-			for (int i = 0; i <= start; i++) {
-				bt_quantity->bitmaps[i]->btv->setBit(row_id, 1, _wl->bitmap_config);
-			}
-			for (int i = start - 1; i < 11; i++) {
-				bt_quantity->bitmaps[i]->btv->setBit(row_id, 0, _wl->bitmap_config);
-			}
-		}
+
+		int quantity_idx = 0;	
+		if (quantity < 10) {
+			quantity_idx = 0;
+		} else {
+			quantity_idx = quantity - 10;
+		} 
+
+		if (quantity_idx < 11)
+			bt_quantity->update(/*tid*/ 0, row_id, quantity_idx);
 
 		/*====================================================+
 		EXEC SQL INSERT
