@@ -155,7 +155,15 @@ int main(int argc, char* argv[])
 		pthread_join(p_thds[i], NULL);
 	//int64_t endtime = get_server_clock();
 	auto end = std::chrono::high_resolution_clock::now();
-	long  long time_elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+	double time_elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+
+	if (WORKLOAD != TEST) {
+		printf("=== End of simulation === \nSimTime = %.2f(ms), Throughput = %.0f(txn/s)\n", time_elapsed_us/1000, (MAX_TXN_PER_PART*g_thread_cnt) / (time_elapsed_us/1000000.0));
+		if (STATS_ENABLE)
+			stats.print();
+	} else {
+		((TestWorkload *)m_wl)->summarize();
+	}
 
 #if (WORKLOAD == TPCC && TPCC_EVA_CUBIT == true)
 	if ((config->approach == "nbub-lf") || (config->approach == "nbub-lk")) 
@@ -169,13 +177,6 @@ int main(int argc, char* argv[])
 	}
 #endif
 	
-	if (WORKLOAD != TEST) {
-		printf("PASS! SimTime = %ld(ms)\n", time_elapsed_us);
-		if (STATS_ENABLE)
-			stats.print();
-	} else {
-		((TestWorkload *)m_wl)->summarize();
-	}
 	return 0;
 }
 

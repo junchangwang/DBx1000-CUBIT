@@ -35,7 +35,11 @@ RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 		case TPCC_DELIVERY :
 			return run_delivery(m_query); break;*/
 		case TPCC_STOCK_LEVEL :
+	#if (TPCC_EVA_CUBIT)
+			return run_stock_level_bt(m_query); break;
+	#else
 			return run_stock_level(m_query); break;
+	#endif
 		default:
 			assert(false);
 	}
