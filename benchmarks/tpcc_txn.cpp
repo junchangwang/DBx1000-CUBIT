@@ -25,9 +25,6 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 
 RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 	tpcc_query * m_query = (tpcc_query *) query;
-#if TPCC_EVA_CUBIT && (TPCC_EVA_CUBIT == TPCC)
-	return evaluate_index(m_query);
-#else
 	switch (m_query->type) {
 		case TPCC_PAYMENT :
 			return run_payment(m_query); break;
@@ -38,11 +35,13 @@ RC tpcc_txn_man::run_txn(int tid, base_query * query) {
 		case TPCC_DELIVERY :
 			return run_delivery(m_query); break;*/
 		case TPCC_STOCK_LEVEL :
-			return run_stock_level_bt(m_query); break;
+			return run_stock_level(m_query); break;
 		default:
 			assert(false);
 	}
-#endif
+	// The following althernative path is used to evaluate the customer-list sub-query
+	// described in the paper.
+	// return evaluate_index(m_query);
 }
 
 // RC tpcc_txn_man::evaluate_index(tpcc_query * query) 
@@ -837,7 +836,7 @@ tpcc_txn_man::run_stock_level_bt(tpcc_query * query) {
 		}
 	}
 
-	printf("cnt=%lu, threshold=%lu, d_id=%lu, w_id=%lu\n", cnt_result, query->threshold_stock, d_id, w_id);
+	printf("cnt=%d, threshold=%lu, d_id=%lu, w_id=%lu\n", cnt_result, query->threshold_stock, d_id, w_id);
 
 	return finish(rc);
 }

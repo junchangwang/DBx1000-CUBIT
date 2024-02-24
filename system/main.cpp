@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
 		printf("workload initialized!\n");
 	}
 
+	/* Build TPCH workload */
 	if (Mode && strcmp(Mode, "build") == 0) {
 		// ((tpch_wl *)m_wl)->build();
 		dynamic_cast<tpch_wl *>(m_wl)->build();
@@ -111,7 +112,7 @@ int main(int argc, char* argv[])
 	Table_config *config = NULL;
 	
 #if (WORKLOAD == TPCC && TPCC_EVA_CUBIT == true)
-	bitmap = dynamic_cast<tpcc_wl *>(m_wl)->bitmap_c_w_id;
+	bitmap = dynamic_cast<tpcc_wl *>(m_wl)->bitmap_s_quantity;
 	config = bitmap->config;
 
 	if ((config->approach == "nbub-lf") || (config->approach == "nbub-lk")) 

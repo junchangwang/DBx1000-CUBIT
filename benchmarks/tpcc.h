@@ -91,7 +91,7 @@ private:
 	RC run_delivery(tpcc_query * query);
 	RC run_stock_level(tpcc_query * query);
 	RC run_stock_level_bt(tpcc_query * query);
-	RC evaluate_index(tpcc_query *query);
+	// RC evaluate_index(tpcc_query *query);
 };
 
 #endif

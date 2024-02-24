@@ -18,10 +18,9 @@
 
 RC tpcc_wl::init() 
 {
-#if TPCC_EVA_CUBIT
 	// init_bitmap_c_w_id();
 	// init_bitmap_s_w_id();
-#endif
+
 	init_bitmap_s_quantity();
 	workload::init();
 	string path = "./benchmarks/";
@@ -190,11 +189,11 @@ RC tpcc_wl::init_table() {
 /**********************************/
 	tpc_buffer = new drand48_data * [g_num_wh];
 	pthread_t * p_thds = new pthread_t[g_num_wh - 1];
-	for (uint32_t i = 0; i < g_num_wh - 1; i++) 
-		pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
+	// for (uint32_t i = 0; i < g_num_wh - 1; i++) 
+	//	pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
 	threadInitWarehouse(this);
-	for (uint32_t i = 0; i < g_num_wh - 1; i++) 
-		pthread_join(p_thds[i], NULL);
+	// for (uint32_t i = 0; i < g_num_wh - 1; i++) 
+	//	pthread_join(p_thds[i], NULL);
 
 	printf("TPCC Data Initialization Complete!\n");
 	return RCOK;
@@ -419,17 +418,15 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 		key = custKey(cid, did, wid);
 		index_insert(i_customer_id, key, row, wh_to_part(wid));
 
-#if TPCC_EVA_CUBIT
-		key = distKey(did - 1, wid - 1);
-		index_insert(i_customers, key, row, wh_to_part(wid));
-		if (bitmap_c_w_id->config->approach == "naive" ) {
-			bitmap_c_w_id->append(0, key);
-		}
-		else if (bitmap_c_w_id->config->approach == "nbub-lk") {
-			nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub *>(bitmap_c_w_id);
-			bitmap->__init_append(0, key*g_cust_per_dist+(cid-1), key);
-		}
-#endif
+	//	key = distKey(did - 1, wid - 1);
+	//	index_insert(i_customers, key, row, wh_to_part(wid));
+	//	if (bitmap_c_w_id->config->approach == "naive" ) {
+	//		bitmap_c_w_id->append(0, key);
+	//	}
+	//	else if (bitmap_c_w_id->config->approach == "nbub-lk") {
+	//		nbub::Nbub *bitmap = dynamic_cast<nbub::Nbub *>(bitmap_c_w_id);
+	//		bitmap->__init_append(0, key*g_cust_per_dist+(cid-1), key);
+	//	}
 	}
 }
 
