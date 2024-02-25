@@ -749,7 +749,6 @@ tpcc_txn_man::run_stock_level(tpcc_query * query) {
 
 	int64_t next_o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);	
 
-	//std::vector<row_t *> orderline_rows(20);
 	std::set<int64_t> item_ids;
 	itemid_t *item_orderline;
 
@@ -807,7 +806,6 @@ tpcc_txn_man::run_stock_level_bt(tpcc_query * query) {
 
 	int64_t next_o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);	
 
-	//std::vector<row_t *> orderline_rows(20);
 	std::set<int64_t> item_ids;
 	itemid_t *item_orderline;
 
@@ -834,7 +832,6 @@ tpcc_txn_man::run_stock_level_bt(tpcc_query * query) {
 
                 if (bv_quantity->getBit(position, _wl->bitmap_config) == 1)
                     cnt_result++;
-
 			}
 			item_orderline = item_orderline->next;
 		}
