@@ -188,12 +188,14 @@ RC tpcc_wl::init_table() {
 //		- order line
 /**********************************/
 	tpc_buffer = new drand48_data * [g_num_wh];
-	pthread_t * p_thds = new pthread_t[g_num_wh - 1];
-	// for (uint32_t i = 0; i < g_num_wh - 1; i++) 
-	//	pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
-	threadInitWarehouse(this);
-	// for (uint32_t i = 0; i < g_num_wh - 1; i++) 
-	//	pthread_join(p_thds[i], NULL);
+//	pthread_t * p_thds = new pthread_t[g_num_wh - 1];
+//	for (uint32_t i = 0; i < g_num_wh - 1; i++) 
+//		pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
+//	threadInitWarehouse(this);
+//	for (uint32_t i = 0; i < g_num_wh - 1; i++) 
+//		pthread_join(p_thds[i], NULL);
+
+	threadInitWarehouse_sequential(this);
 
 	printf("TPCC Data Initialization Complete!\n");
 	return RCOK;
@@ -300,7 +302,6 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
 }
 
 void tpcc_wl::init_tab_stock(uint64_t wid) {
-	t_stock->init_row_buffer(g_max_items);
 	
 	for (UInt32 sid = 1; sid <= g_max_items; sid++) {
 		row_t * row;
@@ -338,6 +339,8 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 		row->set_value(S_DATA, s_data);
 #endif
 		index_insert(i_stock, stockKey(sid, wid), row, wh_to_part(wid));
+
+#if (TPCC_EVA_CUBIT)
 		nbub::Nbub * bitmap = dynamic_cast<nbub::Nbub *>(bitmap_s_quantity);
 
 		int quantity_idx = 0;	
@@ -352,6 +355,7 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 		for (int i = quantity_idx; i < 11; i++) {
 			bitmap->__init_append(0, row_id, i);
 		}
+#endif
 	}
 }
 
@@ -418,8 +422,10 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 		key = custKey(cid, did, wid);
 		index_insert(i_customer_id, key, row, wh_to_part(wid));
 
-	//	key = distKey(did - 1, wid - 1);
-	//	index_insert(i_customers, key, row, wh_to_part(wid));
+		key = distKey(did - 1, wid - 1);
+		index_insert(i_customers, key, row, wh_to_part(wid));
+
+
 	//	if (bitmap_c_w_id->config->approach == "naive" ) {
 	//		bitmap_c_w_id->append(0, key);
 	//	}
@@ -545,16 +551,48 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	assert((uint64_t)tid < g_num_wh);
 	srand48_r(wid, tpc_buffer[tid]);
 	
-	if (tid == 0)
+	if (tid == 0) {
 		wl->init_tab_item();
+		// Thread 0 initialize the table Stock to avoid using latches in initializing.
+		wl->t_stock->init_row_buffer(g_max_items * g_num_wh);
+		for (int i = 1; i <= g_num_wh; i++)
+			wl->init_tab_stock(i);
+	}
 	wl->init_tab_wh( wid );
 	wl->init_tab_dist( wid );
-	wl->init_tab_stock( wid );
 	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
 		wl->init_tab_cust(did, wid);
 		wl->init_tab_order(did, wid);
 		for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) 
 			wl->init_tab_hist(cid, did, wid);
 	}
+	return NULL;
+}
+
+void * tpcc_wl::threadInitWarehouse_sequential(void * This) {
+	tpcc_wl * wl = (tpcc_wl *) This;
+
+	for (int tid = 0; tid < g_num_wh; tid++) {
+		uint32_t wid = tid + 1;
+		tpc_buffer[tid] = (drand48_data *) _mm_malloc(sizeof(drand48_data), 64);
+		assert((uint64_t)tid < g_num_wh);
+		srand48_r(wid, tpc_buffer[tid]);
+
+		if (tid == 0) {
+			wl->init_tab_item();
+			// Thread 0 initialize the table Stock to avoid using latches in initializing.
+			wl->t_stock->init_row_buffer(g_max_items * g_num_wh);
+		}
+		wl->init_tab_wh( wid );
+		wl->init_tab_dist( wid );
+		wl->init_tab_stock(wid);
+		for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+			wl->init_tab_cust(did, wid);
+			wl->init_tab_order(did, wid);
+			for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) 
+				wl->init_tab_hist(cid, did, wid);
+		}
+	}
+
 	return NULL;
 }

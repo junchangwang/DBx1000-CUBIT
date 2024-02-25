@@ -136,8 +136,8 @@
 // are not modeled.
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 						1
-#define TPCC_EVA_CUBIT				flase
+#define NUM_WH 						4
+#define TPCC_EVA_CUBIT				false	
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
