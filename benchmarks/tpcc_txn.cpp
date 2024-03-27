@@ -738,6 +738,8 @@ tpcc_txn_man::run_stock_level(tpcc_query * query) {
 	uint64_t w_id = query->w_id;
 	uint64_t d_id = query->d_id;
 
+	auto start = std::chrono::high_resolution_clock::now();
+
 	item_dist = index_read(_wl->i_district, distKey(d_id, w_id), wh_to_part(w_id));
 	assert(item_dist);
 	row_t * r_dist = ((row_t *)item_dist->location);
@@ -777,7 +779,10 @@ tpcc_txn_man::run_stock_level(tpcc_query * query) {
 		}
 	}
 
-	printf("cnt=%lu, threshold=%lu, d_id=%lu, w_id=%lu\n", item_cnt, query->threshold_stock, d_id, w_id);
+	auto end = std::chrono::high_resolution_clock::now();
+	double time_elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+
+	printf("cnt=%lu, threshold=%lu, d_id=%lu, w_id=%lu, time(ms)=%.2f\n", item_cnt, query->threshold_stock, d_id, w_id, time_elapsed_us/1000);
 
 	return finish(rc);
 }
@@ -790,6 +795,8 @@ tpcc_txn_man::run_stock_level_bt(tpcc_query * query) {
 
 	uint64_t w_id = query->w_id;
 	uint64_t d_id = query->d_id;
+
+	auto start = std::chrono::high_resolution_clock::now();
 
     nbub::Nbub* bt_quantity = dynamic_cast<nbub::Nbub *>(_wl->bitmap_s_quantity);
 	ibis::bitvector* bv_quantity = bt_quantity->bitmaps[query->threshold_stock-10]->btv;
@@ -837,7 +844,10 @@ tpcc_txn_man::run_stock_level_bt(tpcc_query * query) {
 		}
 	}
 
-	printf("cnt=%d, threshold=%lu, d_id=%lu, w_id=%lu\n", cnt_result, query->threshold_stock, d_id, w_id);
+	auto end = std::chrono::high_resolution_clock::now();
+	double time_elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+
+	printf("cnt=%d, threshold=%lu, d_id=%lu, w_id=%lu, time(ms)=%.2f\n", cnt_result, query->threshold_stock, d_id, w_id, time_elapsed_us/1000);
 
 	return finish(rc);
 }
